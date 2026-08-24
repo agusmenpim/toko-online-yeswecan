@@ -3,63 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gents Barbershop | Premium Grooming</title>
+    <title>Toko Modern Corporate</title>
     
-    <!-- PWA Manifest via Data URI -->
-    <script>
-        const manifest = {
-            "name": "Gents Barbershop",
-            "short_name": "Gents",
-            "start_url": ".",
-            "display": "standalone",
-            "background_color": "#ffffff",
-            "theme_color": "#0f172a",
-            "icons": [{"src": "https://placehold.co/192x192/0f172a/ffffff?text=Gents", "sizes": "192x192", "type": "image/png"}]
-        };
-        const manifestData = "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(manifest));
-        document.write(`<link rel="manifest" href="${manifestData}">`);
-    </script>
+    <!-- PWA Manifest Link (Dinamic) -->
+    <link id="manifest" rel="manifest" href="">
     
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-            color: #1e293b;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        .glass {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            background-color: #f3f4f6; /* Light gray for corporate look */
+            color: #1f2937;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
         }
 
-        .glass-dark {
-            background: rgba(15, 23, 42, 0.85);
+        /* Glassmorphism Classes */
+        .glass {
+            background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+        
+        .glass-solid {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(229, 231, 235, 0.5);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
-        /* Smooth section transitions */
-        .page-section {
+        /* Responsive Navigation Layout */
+        #app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Desktop Sidebar */
+        #sidebar {
+            width: 260px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 40;
+            transition: all 0.3s ease;
+        }
+
+        /* Main Content Area */
+        #main-content {
+            flex-grow: 1;
+            margin-left: 260px;
+            width: calc(100% - 260px);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        /* Mobile Bottom Navigation */
+        #bottom-nav {
             display: none;
-            animation: fadeIn 0.4s ease-in-out forwards;
-        }
-        .page-section.active {
-            display: block;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 50;
+            padding-bottom: env(safe-area-inset-bottom); /* For iOS notches */
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* Hide elements dynamically */
+        .hidden-view { display: none !important; }
+
+        /* Media Queries for Mobile/Tablet */
+        @media (max-width: 768px) {
+            #sidebar { display: none; }
+            #bottom-nav { display: flex; }
+            #main-content {
+                margin-left: 0;
+                width: 100%;
+                padding-bottom: 80px; /* Space for bottom nav */
+            }
         }
 
         /* Custom Scrollbar */
@@ -67,846 +99,1674 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        /* Hide scrollbar for mobile nav */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Toast Animation */
+        @keyframes slideInUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .toast-animate { animation: slideInUp 0.3s ease-out forwards; }
+
+        /* Print Styles for Invoice */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; background: white;}
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
-<body class="flex bg-slate-50 min-h-screen">
+<body class="antialiased">
 
-    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-24 md:bottom-10 right-5 z-[9999] flex flex-col gap-2"></div>
 
-    <!-- Modal System -->
-    <div id="custom-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-        <div class="glass w-full max-w-md rounded-2xl p-6 transform transition-all shadow-2xl">
-            <h3 id="modal-title" class="text-xl font-bold mb-2">Pesan</h3>
-            <p id="modal-message" class="text-slate-600 mb-6">Deskripsi pesan.</p>
-            <div class="flex justify-end">
-                <button onclick="closeModal()" class="bg-slate-900 text-white px-6 py-2 rounded-xl font-medium hover:bg-slate-800 transition">Tutup</button>
+    <!-- Modal Overlay -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div id="modal-content" class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md transform scale-95 transition-transform duration-300">
+            <h3 id="modal-title" class="text-xl font-bold mb-4 text-gray-800">Title</h3>
+            <div id="modal-body" class="mb-6 text-gray-600">Body</div>
+            <div id="modal-actions" class="flex justify-end gap-3">
+                <!-- Buttons injected via JS -->
             </div>
         </div>
     </div>
 
-    <!-- Desktop Sidebar (Hidden on Mobile) -->
-    <nav class="hidden md:flex flex-col w-64 fixed h-full glass border-r border-slate-200 z-40">
-        <div class="p-6 border-b border-slate-200/50 text-center">
-            <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">Gents.<br>Barbershop</h1>
-        </div>
-        <div class="flex-1 overflow-y-auto p-4 space-y-2 no-scrollbar">
-            <button onclick="nav('home')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left hover:bg-slate-100 transition active-nav" data-target="home"><i class="fas fa-home w-5 text-center"></i> Beranda</button>
-            <button onclick="nav('about')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left hover:bg-slate-100 transition" data-target="about"><i class="fas fa-info-circle w-5 text-center"></i> Tentang</button>
-            <button onclick="nav('services')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left hover:bg-slate-100 transition" data-target="services"><i class="fas fa-cut w-5 text-center"></i> Layanan</button>
-            <button onclick="nav('barbers')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left hover:bg-slate-100 transition" data-target="barbers"><i class="fas fa-user-tie w-5 text-center"></i> Barbers</button>
-            <button onclick="nav('gallery')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left hover:bg-slate-100 transition" data-target="gallery"><i class="fas fa-images w-5 text-center"></i> Galeri</button>
-            <button onclick="nav('testimonials')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left hover:bg-slate-100 transition" data-target="testimonials"><i class="fas fa-star w-5 text-center"></i> Testimoni</button>
-            <button onclick="nav('contact')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left hover:bg-slate-100 transition" data-target="contact"><i class="fas fa-map-marker-alt w-5 text-center"></i> Kontak</button>
-            <button onclick="nav('booking')" class="w-full mt-4 bg-slate-900 text-white px-4 py-3 rounded-xl font-medium hover:shadow-lg transition"><i class="fas fa-calendar-check mr-2"></i> Booking</button>
-        </div>
-        <div class="p-4 border-t border-slate-200/50">
-            <button onclick="nav('login')" class="w-full flex items-center justify-center gap-2 px-4 py-2 text-slate-500 hover:text-slate-900 transition"><i class="fas fa-sign-in-alt"></i> Login Member/Admin</button>
-        </div>
-    </nav>
-
-    <!-- Mobile Bottom Navigation -->
-    <nav class="md:hidden fixed bottom-0 w-full glass-dark z-40 pb-safe pt-2 px-4 flex justify-between items-center rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
-        <button onclick="nav('home')" class="nav-btn flex flex-col items-center p-2 text-slate-400 hover:text-white transition active-nav-mobile" data-target="home"><i class="fas fa-home text-lg mb-1"></i><span class="text-[10px]">Home</span></button>
-        <button onclick="nav('services')" class="nav-btn flex flex-col items-center p-2 text-slate-400 hover:text-white transition" data-target="services"><i class="fas fa-cut text-lg mb-1"></i><span class="text-[10px]">Layanan</span></button>
-        <button onclick="nav('booking')" class="relative -top-5 bg-white text-slate-900 w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-4 border-slate-900 transform hover:scale-105 transition"><i class="fas fa-calendar-plus text-2xl"></i></button>
-        <button onclick="nav('barbers')" class="nav-btn flex flex-col items-center p-2 text-slate-400 hover:text-white transition" data-target="barbers"><i class="fas fa-user-tie text-lg mb-1"></i><span class="text-[10px]">Barber</span></button>
-        <button onclick="nav('login')" class="nav-btn flex flex-col items-center p-2 text-slate-400 hover:text-white transition" data-target="login"><i class="fas fa-user text-lg mb-1"></i><span class="text-[10px]">Akun</span></button>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="flex-1 md:ml-64 pb-24 md:pb-0 min-h-screen relative">
+    <div id="app-container">
         
-        <!-- Loading Overlay -->
-        <div id="loader" class="absolute inset-0 bg-slate-50/80 backdrop-blur-sm z-30 flex items-center justify-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div>
-        </div>
-
-        <!-- Home Section -->
-        <section id="home" class="page-section active p-4 md:p-10 max-w-5xl mx-auto">
-            <div class="relative rounded-3xl overflow-hidden shadow-2xl mb-10 h-[400px] md:h-[500px]">
-                <img src="https://placehold.co/1200x600/1e293b/ffffff?text=Premium+Barbershop" alt="Banner" class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent flex flex-col justify-end p-8 md:p-12">
-                    <span class="text-white/80 uppercase tracking-widest text-sm font-semibold mb-2">Est. 2024</span>
-                    <h2 class="text-4xl md:text-6xl font-bold text-white mb-4">Gents Barbershop</h2>
-                    <p class="text-slate-200 text-lg md:text-xl mb-6 max-w-xl">Gaya maksimal, percaya diri optimal. Percayakan penampilan Anda pada para ahli kami.</p>
-                    <div class="flex flex-wrap gap-4">
-                        <button onclick="nav('booking')" class="bg-white text-slate-900 px-8 py-3 rounded-full font-bold hover:bg-slate-100 transition shadow-lg">Booking Sekarang</button>
-                        <button onclick="window.open('https://wa.me/6281234567890', '_blank')" class="glass text-white px-8 py-3 rounded-full font-medium hover:bg-white/20 transition flex items-center gap-2"><i class="fab fa-whatsapp text-green-400"></i> Chat Admin</button>
+        <!-- SIDEBAR (Desktop) -->
+        <aside id="sidebar" class="glass-solid flex flex-col justify-between py-6 px-4">
+            <div>
+                <div class="flex items-center gap-3 mb-10 px-2">
+                    <div class="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xl font-bold shadow-lg">
+                        <i class="fas fa-store"></i>
                     </div>
+                    <h1 class="text-xl font-bold tracking-tight text-gray-800">CorpStore<span class="text-blue-600">.</span></h1>
                 </div>
+                
+                <nav class="flex flex-col gap-2" id="nav-desktop">
+                    <!-- Nav items injected via JS to maintain active state -->
+                </nav>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                <div class="glass p-6 rounded-2xl flex items-start gap-4">
-                    <div class="bg-slate-100 p-3 rounded-xl"><i class="fas fa-clock text-xl text-slate-700"></i></div>
-                    <div><h4 class="font-bold">Jam Buka</h4><p class="text-slate-500 text-sm">Senin - Minggu<br>10:00 - 21:00 WIB</p></div>
-                </div>
-                <div class="glass p-6 rounded-2xl flex items-start gap-4">
-                    <div class="bg-slate-100 p-3 rounded-xl"><i class="fas fa-award text-xl text-slate-700"></i></div>
-                    <div><h4 class="font-bold">Barber Profesional</h4><p class="text-slate-500 text-sm">Ditangani oleh kapster berpengalaman & tersertifikasi.</p></div>
-                </div>
-                <div class="glass p-6 rounded-2xl flex items-start gap-4">
-                    <div class="bg-slate-100 p-3 rounded-xl"><i class="fas fa-coffee text-xl text-slate-700"></i></div>
-                    <div><h4 class="font-bold">Kenyamanan Ekstra</h4><p class="text-slate-500 text-sm">Ruangan AC, WiFi gratis, dan minuman ringan.</p></div>
-                </div>
+            <div class="border-t border-gray-200 pt-4" id="auth-section-desktop">
+                <!-- Auth status injected via JS -->
             </div>
-        </section>
+        </aside>
 
-        <!-- About Section -->
-        <section id="about" class="page-section p-4 md:p-10 max-w-5xl mx-auto">
-            <h2 class="text-3xl font-bold mb-8 flex items-center gap-3"><i class="fas fa-info-circle text-slate-300"></i> Tentang Kami</h2>
-            <div class="glass p-8 rounded-3xl">
-                <div class="grid md:grid-cols-2 gap-8 items-center">
-                    <div>
-                        <h3 class="text-2xl font-bold mb-4">Lebih dari sekadar potong rambut.</h3>
-                        <p class="text-slate-600 mb-4 leading-relaxed">Gents Barbershop didirikan dengan satu misi: memberikan pengalaman grooming premium untuk pria modern. Kami percaya bahwa potongan rambut yang bagus adalah dasar dari kepercayaan diri.</p>
-                        <p class="text-slate-600 leading-relaxed mb-6">Dengan desain interior yang nyaman dan steril, serta peralatan higienis berkualitas tinggi, kami memastikan setiap kunjungan Anda bernilai.</p>
-                        <ul class="space-y-2 text-slate-700">
-                            <li><i class="fas fa-check text-green-500 mr-2"></i> Area tunggu VIP</li>
-                            <li><i class="fas fa-check text-green-500 mr-2"></i> Handuk hangat (Hot Towel)</li>
-                            <li><i class="fas fa-check text-green-500 mr-2"></i> Produk grooming import</li>
-                        </ul>
+        <!-- BOTTOM NAV (Mobile) -->
+        <nav id="bottom-nav" class="glass-solid flex justify-around items-center py-3 border-t border-gray-200 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
+            <!-- Nav items injected via JS -->
+        </nav>
+
+        <!-- MAIN CONTENT -->
+        <main id="main-content" class="p-4 md:p-8 min-h-screen">
+            
+            <!-- HEADER (Mobile Only) -->
+            <header class="md:hidden flex justify-between items-center mb-6 glass-solid p-4 rounded-2xl shadow-sm">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold">
+                        <i class="fas fa-store text-sm"></i>
                     </div>
-                    <div class="rounded-2xl overflow-hidden shadow-lg h-64 md:h-auto">
-                        <img src="https://placehold.co/600x600/334155/ffffff?text=Interior+Shop" alt="Interior" class="w-full h-full object-cover">
+                    <h1 class="text-lg font-bold text-gray-800">CorpStore.</h1>
+                </div>
+                <div id="mobile-header-actions" class="flex gap-3 text-gray-600">
+                    <button onclick="navigate('cart')" class="relative p-2">
+                        <i class="fas fa-shopping-cart text-xl"></i>
+                        <span id="cart-badge-mobile" class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center hidden">0</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- VIEW: BERANDA -->
+            <section id="view-home" class="view-section">
+                <!-- Banner -->
+                <div class="w-full h-48 md:h-72 rounded-3xl bg-gradient-to-r from-blue-700 to-blue-500 text-white flex flex-col justify-center px-8 md:px-16 shadow-xl mb-10 overflow-hidden relative">
+                    <div class="relative z-10">
+                        <h2 class="text-3xl md:text-5xl font-bold mb-4">Solusi Pengadaan<br>Profesional.</h2>
+                        <p class="text-sm md:text-lg text-blue-100 mb-6 max-w-md">Temukan produk berkualitas dengan harga terbaik untuk kebutuhan bisnis Anda.</p>
+                        <button onclick="navigate('catalog')" class="bg-white text-blue-700 px-6 py-2.5 rounded-full font-semibold hover:bg-blue-50 transition shadow-lg">Belanja Sekarang</button>
+                    </div>
+                    <i class="fas fa-box-open absolute -right-10 -bottom-10 text-[200px] text-white opacity-10 rotate-12"></i>
+                </div>
+
+                <!-- Kategori -->
+                <div class="mb-10">
+                    <div class="flex justify-between items-end mb-4">
+                        <h3 class="text-xl font-bold text-gray-800">Kategori Pilihan</h3>
+                        <button onclick="navigate('catalog')" class="text-sm text-blue-600 font-medium hover:underline">Lihat Semua</button>
+                    </div>
+                    <div class="flex gap-4 overflow-x-auto pb-4 hide-scrollbar" id="home-categories">
+                        <!-- Injected via JS -->
                     </div>
                 </div>
-            </div>
-        </section>
 
-        <!-- Services Section -->
-        <section id="services" class="page-section p-4 md:p-10 max-w-5xl mx-auto">
-            <div class="flex justify-between items-end mb-8">
-                <h2 class="text-3xl font-bold flex items-center gap-3"><i class="fas fa-cut text-slate-300"></i> Layanan & Harga</h2>
-                <button onclick="nav('booking')" class="text-sm font-semibold text-slate-600 hover:text-slate-900">Booking <i class="fas fa-arrow-right"></i></button>
-            </div>
-            <div id="services-list-public" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Data Services will be injected here -->
-            </div>
-        </section>
-
-        <!-- Barbers Section -->
-        <section id="barbers" class="page-section p-4 md:p-10 max-w-5xl mx-auto">
-            <h2 class="text-3xl font-bold mb-8 flex items-center gap-3"><i class="fas fa-users text-slate-300"></i> Daftar Barber</h2>
-            <div id="barbers-list-public" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                <!-- Data Barbers will be injected here -->
-            </div>
-        </section>
-
-        <!-- Booking Section -->
-        <section id="booking" class="page-section p-4 md:p-10 max-w-3xl mx-auto">
-            <h2 class="text-3xl font-bold mb-8 flex items-center gap-3"><i class="fas fa-calendar-check text-slate-300"></i> Booking Online</h2>
-            <div class="glass p-6 md:p-8 rounded-3xl">
-                <form id="booking-form" class="space-y-5">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Nama Lengkap</label>
-                            <input type="text" id="book-nama" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-800 bg-white/50">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Nomor WhatsApp</label>
-                            <input type="tel" id="book-wa" placeholder="08..." required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-800 bg-white/50">
-                        </div>
+                <!-- Produk Unggulan -->
+                <div class="mb-10">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Produk Unggulan</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6" id="home-featured-products">
+                        <!-- Injected via JS -->
                     </div>
+                </div>
+
+                <!-- Produk Terbaru -->
+                <div class="mb-20">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Produk Terbaru</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6" id="home-new-products">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Floating WA Button -->
+                <a href="https://wa.me/6281234567890" target="_blank" class="fixed bottom-24 md:bottom-10 right-5 bg-green-500 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:bg-green-600 transition-colors z-40">
+                    <i class="fab fa-whatsapp text-3xl"></i>
+                </a>
+            </section>
+
+            <!-- VIEW: KATALOG PRODUK -->
+            <section id="view-catalog" class="view-section hidden-view">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Katalog Produk</h2>
                     
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Pilih Layanan</label>
-                        <select id="book-layanan" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-800 bg-white/50 appearance-none">
-                            <option value="">Memuat layanan...</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Pilih Barber</label>
-                        <select id="book-barber" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-800 bg-white/50 appearance-none">
-                            <option value="">Memuat barber...</option>
-                        </select>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-5">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Tanggal</label>
-                            <input type="date" id="book-tanggal" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-800 bg-white/50">
+                    <!-- Search & Filter -->
+                    <div class="flex flex-col md:flex-row gap-4 mb-6">
+                        <div class="relative flex-grow">
+                            <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="catalog-search" placeholder="Cari produk..." class="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Jam</label>
-                            <select id="book-jam" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-800 bg-white/50 appearance-none">
-                                <option value="10:00">10:00</option><option value="11:00">11:00</option>
-                                <option value="13:00">13:00</option><option value="14:00">14:00</option>
-                                <option value="15:00">15:00</option><option value="16:00">16:00</option>
-                                <option value="19:00">19:00</option><option value="20:00">20:00</option>
+                        <div class="w-full md:w-64">
+                            <select id="catalog-category-filter" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white appearance-none">
+                                <option value="all">Semua Kategori</option>
+                                <!-- Injected via JS -->
                             </select>
                         </div>
                     </div>
+                </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Catatan Tambahan (Opsional)</label>
-                        <textarea id="book-catatan" rows="2" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-800 bg-white/50"></textarea>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6" id="catalog-products">
+                    <!-- Injected via JS -->
+                </div>
+            </section>
+
+            <!-- VIEW: DETAIL PRODUK -->
+            <section id="view-detail" class="view-section hidden-view">
+                <button onclick="navigate('catalog')" class="flex items-center gap-2 text-gray-600 hover:text-blue-600 mb-6 font-medium transition">
+                    <i class="fas fa-arrow-left"></i> Kembali ke Katalog
+                </button>
+                
+                <div class="glass-solid p-6 md:p-10 rounded-3xl" id="detail-container">
+                    <!-- Injected via JS -->
+                </div>
+            </section>
+
+            <!-- VIEW: KERANJANG -->
+            <section id="view-cart" class="view-section hidden-view">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Keranjang Belanja</h2>
+                
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <!-- Item List -->
+                    <div class="lg:w-2/3" id="cart-items-container">
+                        <!-- Injected via JS -->
+                    </div>
+                    
+                    <!-- Summary -->
+                    <div class="lg:w-1/3">
+                        <div class="glass-solid p-6 rounded-2xl sticky top-6">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4">Ringkasan Belanja</h3>
+                            <div class="flex justify-between mb-3 text-gray-600">
+                                <span>Total Item</span>
+                                <span id="cart-summary-qty">0</span>
+                            </div>
+                            <div class="flex justify-between mb-4 text-gray-600">
+                                <span>Subtotal</span>
+                                <span id="cart-summary-subtotal">Rp 0</span>
+                            </div>
+                            <hr class="my-4 border-gray-200">
+                            <div class="flex justify-between mb-6 text-lg font-bold text-gray-800">
+                                <span>Total Tagihan</span>
+                                <span id="cart-summary-total">Rp 0</span>
+                            </div>
+                            
+                            <button id="btn-proceed-checkout" onclick="proceedToCheckout()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg flex justify-center items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                <span>Lanjut ke Checkout</span> <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: CHECKOUT -->
+            <section id="view-checkout" class="view-section hidden-view">
+                <button onclick="navigate('cart')" class="flex items-center gap-2 text-gray-600 hover:text-blue-600 mb-6 font-medium transition">
+                    <i class="fas fa-arrow-left"></i> Kembali ke Keranjang
+                </button>
+                
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Checkout Pesanan</h2>
+                
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <div class="lg:w-2/3">
+                        <div class="glass-solid p-6 rounded-2xl mb-6">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Informasi Pengiriman</h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="col-span-2 md:col-span-1">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                                    <input type="text" id="co-name" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none" required>
+                                </div>
+                                <div class="col-span-2 md:col-span-1">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nomor WhatsApp</label>
+                                    <input type="text" id="co-wa" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none" required>
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Lengkap</label>
+                                    <textarea id="co-address" rows="3" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none" required></textarea>
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Catatan Pesanan (Opsional)</label>
+                                    <input type="text" id="co-note" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-solid p-6 rounded-2xl">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Metode Pembayaran</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <label class="border rounded-xl p-4 cursor-pointer hover:border-blue-500 flex flex-col items-center gap-2 relative">
+                                    <input type="radio" name="payment-method" value="Transfer Bank" class="absolute top-3 right-3" checked>
+                                    <i class="fas fa-university text-3xl text-gray-600"></i>
+                                    <span class="font-medium">Transfer Bank</span>
+                                </label>
+                                <label class="border rounded-xl p-4 cursor-pointer hover:border-blue-500 flex flex-col items-center gap-2 relative">
+                                    <input type="radio" name="payment-method" value="COD" class="absolute top-3 right-3">
+                                    <i class="fas fa-hand-holding-usd text-3xl text-gray-600"></i>
+                                    <span class="font-medium">Bayar di Tempat (COD)</span>
+                                </label>
+                                <label class="border rounded-xl p-4 cursor-pointer hover:border-blue-500 flex flex-col items-center gap-2 relative">
+                                    <input type="radio" name="payment-method" value="QRIS" class="absolute top-3 right-3">
+                                    <i class="fas fa-qrcode text-3xl text-gray-600"></i>
+                                    <span class="font-medium">QRIS</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
-                    <button type="submit" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition shadow-lg">Konfirmasi Booking</button>
-                </form>
-            </div>
-        </section>
-
-        <!-- Gallery & Testimonial Section -->
-        <section id="gallery" class="page-section p-4 md:p-10 max-w-5xl mx-auto">
-            <h2 class="text-3xl font-bold mb-8 flex items-center gap-3"><i class="fas fa-images text-slate-300"></i> Galeri</h2>
-            <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <!-- Rendered dynamically -->
-            </div>
-        </section>
-
-        <section id="testimonials" class="page-section p-4 md:p-10 max-w-5xl mx-auto">
-            <h2 class="text-3xl font-bold mb-8 flex items-center gap-3"><i class="fas fa-star text-slate-300"></i> Ulasan Pelanggan</h2>
-            <div id="testimonial-list" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Rendered dynamically -->
-            </div>
-        </section>
-
-        <!-- Contact Section -->
-        <section id="contact" class="page-section p-4 md:p-10 max-w-5xl mx-auto">
-            <h2 class="text-3xl font-bold mb-8 flex items-center gap-3"><i class="fas fa-map-marked-alt text-slate-300"></i> Kontak & Lokasi</h2>
-            <div class="grid md:grid-cols-2 gap-8">
-                <div class="glass p-6 rounded-3xl space-y-6">
-                    <div class="flex items-center gap-4"><div class="bg-slate-100 p-4 rounded-full"><i class="fab fa-whatsapp text-2xl text-green-500"></i></div><div><p class="text-sm text-slate-500">WhatsApp</p><p class="font-bold">0812-3456-7890</p></div></div>
-                    <div class="flex items-center gap-4"><div class="bg-slate-100 p-4 rounded-full"><i class="fab fa-instagram text-2xl text-pink-500"></i></div><div><p class="text-sm text-slate-500">Instagram</p><p class="font-bold">@gentsbarbershop</p></div></div>
-                    <div class="flex items-center gap-4"><div class="bg-slate-100 p-4 rounded-full"><i class="fas fa-map-marker-alt text-2xl text-red-500"></i></div><div><p class="text-sm text-slate-500">Alamat</p><p class="font-bold">Jl. Sudirman No.123, Jakarta Pusat</p></div></div>
+                    <div class="lg:w-1/3">
+                        <div class="glass-solid p-6 rounded-2xl sticky top-6">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4">Ringkasan Pesanan</h3>
+                            <div id="co-items-list" class="mb-4 max-h-64 overflow-y-auto pr-2">
+                                <!-- Injected via JS -->
+                            </div>
+                            <hr class="my-4 border-gray-200">
+                            <div class="flex justify-between mb-6 text-xl font-bold text-gray-800">
+                                <span>Total Tagihan</span>
+                                <span id="co-total-amount">Rp 0</span>
+                            </div>
+                            
+                            <button onclick="processCheckout()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition shadow-lg">
+                                Buat Pesanan
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="rounded-3xl overflow-hidden shadow-lg h-64 md:h-auto bg-slate-200 flex items-center justify-center">
-                    <span class="text-slate-500">[Google Maps Embed Area]</span>
-                </div>
-            </div>
-        </section>
+            </section>
 
-        <!-- Login Section (Hybrid) -->
-        <section id="login" class="page-section p-4 md:p-10 max-w-md mx-auto mt-10">
-            <div class="glass p-8 rounded-3xl">
-                <div class="flex justify-center mb-6">
-                    <div class="bg-slate-100 p-1 rounded-xl flex gap-1">
-                        <button onclick="toggleLogin('member')" id="btn-tab-member" class="px-4 py-2 rounded-lg bg-white shadow font-medium text-sm transition">Member</button>
-                        <button onclick="toggleLogin('admin')" id="btn-tab-admin" class="px-4 py-2 rounded-lg text-slate-500 font-medium text-sm transition hover:text-slate-900">Admin</button>
+            <!-- VIEW: PESANAN SAYA (USER) -->
+            <section id="view-orders" class="view-section hidden-view">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Pesanan Saya</h2>
+                
+                <div class="glass-solid rounded-2xl overflow-hidden shadow-sm">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 text-sm">
+                                    <th class="p-4 font-semibold">No. Pesanan</th>
+                                    <th class="p-4 font-semibold">Tanggal</th>
+                                    <th class="p-4 font-semibold">Total Tagihan</th>
+                                    <th class="p-4 font-semibold">Status</th>
+                                    <th class="p-4 font-semibold text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="user-orders-table" class="divide-y divide-gray-100 text-sm">
+                                <!-- Injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="user-orders-empty" class="hidden p-8 text-center text-gray-500">
+                        <i class="fas fa-box-open text-4xl mb-3 opacity-50"></i>
+                        <p>Belum ada pesanan.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: LOGIN USER / ADMIN -->
+            <section id="view-auth" class="view-section hidden-view flex flex-col items-center justify-center min-h-[70vh]">
+                <div class="glass-solid p-8 rounded-3xl shadow-xl w-full max-w-md">
+                    
+                    <!-- Tabs -->
+                    <div class="flex border-b border-gray-200 mb-6">
+                        <button id="tab-login-user" onclick="switchAuthTab('user')" class="flex-1 py-3 text-center font-semibold text-blue-600 border-b-2 border-blue-600">Pelanggan</button>
+                        <button id="tab-login-admin" onclick="switchAuthTab('admin')" class="flex-1 py-3 text-center font-semibold text-gray-500 hover:text-gray-800">Admin</button>
+                    </div>
+
+                    <!-- User Form -->
+                    <div id="form-login-user">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-2">Masuk / Daftar</h3>
+                        <p class="text-sm text-gray-500 mb-6">Gunakan Username dan Password untuk pelanggan.</p>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Username (ID/No WA)</label>
+                            <input type="text" id="auth-username" class="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50">
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                            <input type="password" id="auth-password" class="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50">
+                        </div>
+                        
+                        <div class="flex flex-col gap-3">
+                            <button onclick="handleUserAuth('login')" class="w-full bg-blue-600 text-white py-2.5 rounded-xl font-bold hover:bg-blue-700 transition">Masuk</button>
+                            <div class="relative flex items-center justify-center my-2">
+                                <hr class="w-full border-gray-300"><span class="absolute bg-white px-2 text-xs text-gray-400">Atau</span>
+                            </div>
+                            <button onclick="handleUserAuth('register')" class="w-full bg-white text-blue-600 border border-blue-600 py-2.5 rounded-xl font-bold hover:bg-blue-50 transition">Daftar Akun Baru</button>
+                        </div>
+                    </div>
+
+                    <!-- Admin Form -->
+                    <div id="form-login-admin" class="hidden">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-2">Admin Panel</h3>
+                        <p class="text-sm text-gray-500 mb-6">Masuk menggunakan kredensial Firebase Auth.</p>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email Admin</label>
+                            <input type="email" id="auth-admin-email" class="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50">
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                            <input type="password" id="auth-admin-password" class="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50">
+                        </div>
+                        
+                        <button onclick="handleAdminAuth()" class="w-full bg-gray-800 text-white py-2.5 rounded-xl font-bold hover:bg-gray-900 transition shadow-lg">Login Admin</button>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- VIEW: ADMIN DASHBOARD -->
+            <section id="view-admin-dashboard" class="view-section hidden-view">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Dashboard Admin</h2>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="glass-solid p-5 rounded-2xl shadow-sm border-l-4 border-blue-500">
+                        <p class="text-sm text-gray-500 font-medium">Total Produk</p>
+                        <h4 class="text-2xl font-bold text-gray-800" id="stat-products">0</h4>
+                    </div>
+                    <div class="glass-solid p-5 rounded-2xl shadow-sm border-l-4 border-green-500">
+                        <p class="text-sm text-gray-500 font-medium">Total Penjualan</p>
+                        <h4 class="text-2xl font-bold text-gray-800" id="stat-revenue">Rp 0</h4>
+                    </div>
+                    <div class="glass-solid p-5 rounded-2xl shadow-sm border-l-4 border-purple-500">
+                        <p class="text-sm text-gray-500 font-medium">Total Pesanan</p>
+                        <h4 class="text-2xl font-bold text-gray-800" id="stat-orders">0</h4>
+                    </div>
+                    <div class="glass-solid p-5 rounded-2xl shadow-sm border-l-4 border-orange-500">
+                        <p class="text-sm text-gray-500 font-medium">Pesanan Baru</p>
+                        <h4 class="text-2xl font-bold text-gray-800" id="stat-new-orders">0</h4>
                     </div>
                 </div>
 
-                <!-- Member Login (Firestore Data Validation) -->
-                <form id="form-login-member" class="space-y-4 block">
-                    <div class="text-center mb-4"><h3 class="text-xl font-bold">Login Pelanggan</h3><p class="text-xs text-slate-500">Cek status booking Anda</p></div>
-                    <input type="tel" id="login-wa" placeholder="Nomor WhatsApp" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-800 bg-white/50">
-                    <input type="password" id="login-pin" placeholder="PIN (default: 1234)" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-800 bg-white/50">
-                    <button type="submit" class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition">Masuk</button>
-                </form>
-
-                <!-- Admin Login (Firebase Auth) -->
-                <form id="form-login-admin" class="space-y-4 hidden">
-                    <div class="text-center mb-4"><h3 class="text-xl font-bold">Login Admin</h3><p class="text-xs text-slate-500">Akses manajemen sistem</p></div>
-                    <input type="email" id="admin-email" placeholder="Email" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-800 bg-white/50">
-                    <input type="password" id="admin-pass" placeholder="Password" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-800 bg-white/50">
-                    <button type="submit" class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition">Masuk Dashboard</button>
-                </form>
-            </div>
-        </section>
-
-        <!-- Member Dashboard Area -->
-        <section id="member-dashboard" class="page-section p-4 md:p-10 max-w-3xl mx-auto">
-            <div class="flex justify-between items-center mb-8">
-                <div>
-                    <h2 class="text-3xl font-bold">Halo, <span id="member-name-display" class="text-slate-600">Pelanggan</span></h2>
-                    <p class="text-slate-500">Riwayat & Status Booking Anda</p>
+                <div class="glass-solid p-6 rounded-2xl shadow-sm">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Aktivitas Terbaru</h3>
+                    <p class="text-sm text-gray-500">Sistem berfungsi optimal. Lihat menu manajemen untuk detail lengkap.</p>
                 </div>
-                <button onclick="logout()" class="text-red-500 text-sm font-bold bg-red-50 px-4 py-2 rounded-lg hover:bg-red-100"><i class="fas fa-sign-out-alt"></i> Keluar</button>
-            </div>
-            <div class="glass p-6 rounded-3xl">
-                <h3 class="font-bold mb-4">Booking Aktif</h3>
-                <div id="member-bookings" class="space-y-4">
-                    <!-- Member bookings injected here -->
-                    <p class="text-slate-500 text-center py-4">Belum ada data booking.</p>
+            </section>
+
+            <!-- VIEW: ADMIN MANAJEMEN PRODUK -->
+            <section id="view-admin-products" class="view-section hidden-view">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Manajemen Produk</h2>
+                    <button onclick="openProductModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 shadow"><i class="fas fa-plus mr-2"></i> Tambah Produk</button>
                 </div>
-            </div>
-        </section>
-
-        <!-- Admin Dashboard Section -->
-        <section id="admin-dashboard" class="page-section p-4 md:p-6 w-full max-w-6xl mx-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">Dashboard Admin</h2>
-                <button onclick="logout()" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-100 transition"><i class="fas fa-power-off"></i> Keluar</button>
-            </div>
-
-            <!-- Stats -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div class="glass p-4 rounded-2xl border-l-4 border-l-blue-500"><p class="text-xs text-slate-500 font-semibold uppercase">Booking Hari Ini</p><p id="stat-today" class="text-2xl font-bold mt-1">0</p></div>
-                <div class="glass p-4 rounded-2xl border-l-4 border-l-amber-500"><p class="text-xs text-slate-500 font-semibold uppercase">Menunggu</p><p id="stat-pending" class="text-2xl font-bold mt-1">0</p></div>
-                <div class="glass p-4 rounded-2xl border-l-4 border-l-green-500"><p class="text-xs text-slate-500 font-semibold uppercase">Total Selesai</p><p id="stat-done" class="text-2xl font-bold mt-1">0</p></div>
-                <div class="glass p-4 rounded-2xl border-l-4 border-l-purple-500"><p class="text-xs text-slate-500 font-semibold uppercase">Total Layanan</p><p id="stat-services" class="text-2xl font-bold mt-1">0</p></div>
-            </div>
-
-            <!-- Admin Tabs -->
-            <div class="flex overflow-x-auto gap-2 mb-6 pb-2 no-scrollbar">
-                <button onclick="switchAdminTab('manage-bookings')" id="tab-manage-bookings" class="admin-tab active whitespace-nowrap bg-slate-900 text-white px-5 py-2 rounded-xl text-sm font-medium">Manajemen Booking</button>
-                <button onclick="switchAdminTab('manage-services')" id="tab-manage-services" class="admin-tab whitespace-nowrap bg-white text-slate-700 border border-slate-200 px-5 py-2 rounded-xl text-sm font-medium">Manajemen Layanan</button>
-                <button onclick="switchAdminTab('manage-barbers')" id="tab-manage-barbers" class="admin-tab whitespace-nowrap bg-white text-slate-700 border border-slate-200 px-5 py-2 rounded-xl text-sm font-medium">Manajemen Barber</button>
-            </div>
-
-            <!-- Admin Content: Bookings -->
-            <div id="admin-manage-bookings" class="admin-view glass rounded-2xl overflow-hidden block">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead><tr class="bg-slate-100/50 text-sm"><th class="p-4 border-b">Pelanggan & WA</th><th class="p-4 border-b">Layanan & Barber</th><th class="p-4 border-b">Jadwal</th><th class="p-4 border-b">Status</th><th class="p-4 border-b">Aksi</th></tr></thead>
-                        <tbody id="admin-bookings-table" class="text-sm">
-                            <!-- Injected -->
-                        </tbody>
-                    </table>
+                
+                <div class="glass-solid rounded-2xl overflow-hidden shadow-sm">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 text-sm">
+                                    <th class="p-4 font-semibold w-16">Foto</th>
+                                    <th class="p-4 font-semibold">Nama Produk</th>
+                                    <th class="p-4 font-semibold">Kategori</th>
+                                    <th class="p-4 font-semibold">Harga</th>
+                                    <th class="p-4 font-semibold">Stok</th>
+                                    <th class="p-4 font-semibold text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-products-table" class="divide-y divide-gray-100 text-sm">
+                                <!-- Injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
+            </section>
 
-            <!-- Admin Content: Services -->
-            <div id="admin-manage-services" class="admin-view hidden">
-                <div class="flex justify-end mb-4"><button onclick="showModalForm('service')" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-medium shadow"><i class="fas fa-plus"></i> Tambah Layanan</button></div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="admin-services-grid"></div>
-            </div>
+            <!-- VIEW: ADMIN MANAJEMEN PESANAN -->
+            <section id="view-admin-orders" class="view-section hidden-view">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Manajemen Pesanan</h2>
+                
+                <div class="glass-solid rounded-2xl overflow-hidden shadow-sm">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 text-sm">
+                                    <th class="p-4 font-semibold">No. Pesanan</th>
+                                    <th class="p-4 font-semibold">Pelanggan</th>
+                                    <th class="p-4 font-semibold">Total Tagihan</th>
+                                    <th class="p-4 font-semibold">Status</th>
+                                    <th class="p-4 font-semibold text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-orders-table" class="divide-y divide-gray-100 text-sm">
+                                <!-- Injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
 
-            <!-- Admin Content: Barbers -->
-            <div id="admin-manage-barbers" class="admin-view hidden">
-                 <div class="flex justify-end mb-4"><button onclick="showModalForm('barber')" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-medium shadow"><i class="fas fa-plus"></i> Tambah Barber</button></div>
-                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="admin-barbers-grid"></div>
-            </div>
-        </section>
+            <!-- VIEW: ADMIN LAPORAN -->
+            <section id="view-admin-reports" class="view-section hidden-view">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Laporan Sederhana</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="glass-solid p-6 rounded-2xl shadow-sm">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Ringkasan Penjualan</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Total Omzet Keseluruhan</span>
+                                <span class="font-bold text-lg text-green-600" id="report-total-omset">Rp 0</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Pesanan Selesai</span>
+                                <span class="font-bold text-gray-800" id="report-completed-orders">0</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Pesanan Dibatalkan</span>
+                                <span class="font-bold text-red-500" id="report-canceled-orders">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-solid p-6 rounded-2xl shadow-sm">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Produk Terlaris</h3>
+                        <ul id="report-top-products" class="space-y-3">
+                            <!-- Injected via JS -->
+                            <li class="text-sm text-gray-500 text-center italic py-4">Data belum cukup.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
 
-        <!-- Hidden Template Forms for Modals -->
-        <div id="form-tpl-service" class="hidden">
-            <input type="hidden" id="srv-id">
-            <div class="space-y-3">
-                <input type="text" id="srv-nama" placeholder="Nama Layanan" class="w-full p-2 border rounded-lg bg-slate-50">
-                <input type="number" id="srv-harga" placeholder="Harga (Rp)" class="w-full p-2 border rounded-lg bg-slate-50">
-                <textarea id="srv-desc" placeholder="Deskripsi Singkat" class="w-full p-2 border rounded-lg bg-slate-50"></textarea>
-                <button onclick="saveService()" class="w-full bg-slate-900 text-white py-2 rounded-lg">Simpan</button>
+        </main>
+    </div>
+
+    <!-- PRINT AREA (Hidden default) -->
+    <div id="print-area" class="hidden p-8 bg-white text-black">
+        <div class="flex justify-between items-start mb-8 border-b-2 border-black pb-4">
+            <div>
+                <h1 class="text-3xl font-bold uppercase tracking-wider">INVOICE</h1>
+                <p class="text-sm mt-1">CorpStore.</p>
+            </div>
+            <div class="text-right text-sm">
+                <p class="font-bold" id="print-order-id">ORD-XXXX</p>
+                <p id="print-date">Tanggal: -</p>
             </div>
         </div>
-        <div id="form-tpl-barber" class="hidden">
-            <input type="hidden" id="brb-id">
-            <div class="space-y-3">
-                <input type="text" id="brb-nama" placeholder="Nama Barber" class="w-full p-2 border rounded-lg bg-slate-50">
-                <input type="text" id="brb-keahlian" placeholder="Keahlian (cth: Fade, Styling)" class="w-full p-2 border rounded-lg bg-slate-50">
-                <input type="text" id="brb-pengalaman" placeholder="Pengalaman (cth: 5 Tahun)" class="w-full p-2 border rounded-lg bg-slate-50">
-                <button onclick="saveBarber()" class="w-full bg-slate-900 text-white py-2 rounded-lg">Simpan</button>
+        
+        <div class="grid grid-cols-2 gap-8 mb-8 text-sm">
+            <div>
+                <p class="font-bold border-b border-gray-300 mb-2 pb-1">Tagihan Kepada:</p>
+                <p id="print-cust-name" class="font-bold">Nama Pelanggan</p>
+                <p id="print-cust-wa">WA: 08xx</p>
+                <p id="print-cust-address">Alamat</p>
+            </div>
+            <div>
+                <p class="font-bold border-b border-gray-300 mb-2 pb-1">Metode Pembayaran:</p>
+                <p id="print-payment-method" class="font-bold">Transfer</p>
+                <p id="print-status" class="mt-2 text-blue-600 font-bold uppercase">Status</p>
             </div>
         </div>
+        
+        <table class="w-full text-left text-sm border-collapse mb-8">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="p-2 border border-gray-300">Deskripsi Produk</th>
+                    <th class="p-2 border border-gray-300 text-center w-20">Qty</th>
+                    <th class="p-2 border border-gray-300 text-right w-32">Harga</th>
+                    <th class="p-2 border border-gray-300 text-right w-32">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody id="print-items">
+                <!-- Injected via JS -->
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" class="p-2 border border-gray-300 text-right font-bold">TOTAL TAGIHAN</td>
+                    <td class="p-2 border border-gray-300 text-right font-bold text-lg" id="print-total">Rp 0</td>
+                </tr>
+            </tfoot>
+        </table>
+        
+        <div class="text-sm text-center text-gray-600 mt-16 pt-4 border-t border-gray-300">
+            <p>Terima kasih atas pesanan Anda.</p>
+            <p>Jika ada pertanyaan, silakan hubungi WhatsApp kami.</p>
+        </div>
+    </div>
 
-    </main>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, addDoc, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // KONFIGURASI WEBSITE
-        const IS_PREVIEW = typeof __app_id !== 'undefined'; 
+        // -------------------------------------------------------------
+        // 1. KONFIGURASI WEBSITE & FIREBASE
+        // -------------------------------------------------------------
+        const IS_PREVIEW = true; // Set false JIKA SUDAH TERHUBUNG KE FIREBASE
         
-        let firebaseConfig;
-        if(IS_PREVIEW) {
-            firebaseConfig = JSON.parse(__firebase_config);
-        } else {
-            // PASTE FIREBASE CONFIG ANDA DI SINI UNTUK PRODUCTION
-            firebaseConfig = {
-                apiKey: "API_KEY_ANDA",
-                authDomain: "PROJECT_ID.firebaseapp.com",
-                projectId: "PROJECT_ID",
-                storageBucket: "PROJECT_ID.appspot.com",
-                messagingSenderId: "SENDER_ID",
-                appId: "APP_ID"
-            };
-        }
+        // PASTE FIREBASE CONFIG ANDA DI SINI
+        const firebaseConfig = {
+            apiKey: "API_KEY_ANDA",
+            authDomain: "PROJECT_ID.firebaseapp.com",
+            projectId: "PROJECT_ID",
+            storageBucket: "PROJECT_ID.appspot.com",
+            messagingSenderId: "SENDER_ID",
+            appId: "APP_ID"
+        };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'barbershop-v1';
+        // Firebase Modules (Hanya diload jika IS_PREVIEW = false)
+        let app, db, auth;
+        let getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut;
+        let getFirestore, collection, doc, getDocs, getDoc, setDoc, updateDoc, deleteDoc, query, where;
 
-        // State Management
-        let currentUser = null; // Can be 'admin' (Firebase user) or 'member' (Custom object)
-        let dataStore = { services: [], barbers: [], bookings: [], testimonials: [] };
+        // -------------------------------------------------------------
+        // 2. STATE MANAGEMENT & MOCK DATA (Untuk IS_PREVIEW = true)
+        // -------------------------------------------------------------
+        let currentView = 'home';
+        let currentUser = null; // Object pembeli { username, name, dll }
+        let currentAdmin = null; // Object admin firebase auth
+        let cart = [];
+        
+        // Mock DB Arrays (Disimpan di RAM saat preview, atau sync ke localStorage agar asik)
+        let _mockProducts = [];
+        let _mockCategories = [];
+        let _mockUsers = [];
+        let _mockOrders = [];
 
-        // DOM Utils
-        window.q = (sel) => document.querySelector(sel);
+        // Formatting Rupiah
+        const formatRp = (angka) => {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+        };
+        const parseRp = (string) => parseInt(string.replace(/[^0-9]/g, ''), 10) || 0;
+        const generateId = (prefix) => prefix + '-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+
+        // -------------------------------------------------------------
+        // 3. UI HELPERS (Toast, Modal, Navigation)
+        // -------------------------------------------------------------
         window.showToast = (msg, type = 'info') => {
-            const container = q('#toast-container');
+            const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            const bg = type === 'error' ? 'bg-red-500' : (type === 'success' ? 'bg-green-500' : 'bg-slate-800');
-            toast.className = `${bg} text-white px-4 py-3 rounded-xl shadow-lg transform transition-all duration-300 translate-y-[-20px] opacity-0 flex items-center gap-2`;
-            toast.innerHTML = `<i class="fas fa-${type==='error'?'exclamation-circle':(type==='success'?'check-circle':'info-circle')}"></i> ${msg}`;
+            
+            let bgClass = 'bg-gray-800';
+            let icon = 'fa-info-circle';
+            if(type === 'success') { bgClass = 'bg-green-600'; icon = 'fa-check-circle'; }
+            if(type === 'error') { bgClass = 'bg-red-600'; icon = 'fa-exclamation-circle'; }
+            if(type === 'warning') { bgClass = 'bg-orange-500'; icon = 'fa-exclamation-triangle'; }
+
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 toast-animate text-sm font-medium z-50`;
+            toast.innerHTML = `<i class="fas ${icon}"></i> <span>${msg}</span>`;
+            
             container.appendChild(toast);
-            setTimeout(() => { toast.classList.remove('translate-y-[-20px]', 'opacity-0'); }, 10);
-            setTimeout(() => { 
-                toast.classList.add('opacity-0'); 
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                toast.style.transition = 'all 0.3s';
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         };
-        
-        window.showModal = (title, htmlContent) => {
-            q('#modal-title').innerText = title;
-            q('#modal-message').innerHTML = htmlContent;
-            q('#custom-modal').classList.remove('hidden');
-        };
-        window.closeModal = () => q('#custom-modal').classList.add('hidden');
 
-        // PWA Setup (Dynamic Service Worker)
-        const setupPWA = () => {
-            if ('serviceWorker' in navigator) {
-                const swCode = `
-                    self.addEventListener('install', (e) => e.waitUntil(self.skipWaiting()));
-                    self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
-                    self.addEventListener('fetch', (e) => {});
-                `;
-                const blob = new Blob([swCode], {type: 'application/javascript'});
-                const swUrl = URL.createObjectURL(blob);
-                navigator.serviceWorker.register(swUrl).catch(err => console.log('SW Error:', err));
-            }
-        };
-
-        // Navigation logic
-        window.nav = (sectionId) => {
-            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
-            const target = q(`#${sectionId}`);
-            if(target) target.classList.add('active');
+        window.showModal = (title, bodyHtml, actionsHtml) => {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerHTML = bodyHtml;
+            document.getElementById('modal-actions').innerHTML = actionsHtml;
             
-            // Update nav active states
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('bg-slate-100', 'text-white', 'active-nav');
-                if(btn.dataset.target === sectionId) btn.classList.add('bg-slate-100', 'active-nav');
-            });
-            document.querySelectorAll('nav.md\\:hidden .nav-btn').forEach(btn => {
-                btn.classList.remove('text-white', 'active-nav-mobile');
-                btn.classList.add('text-slate-400');
-                if(btn.dataset.target === sectionId) {
-                    btn.classList.add('text-white', 'active-nav-mobile');
-                    btn.classList.remove('text-slate-400');
-                }
-            });
-        };
-
-        window.toggleLogin = (type) => {
-            if(type === 'member') {
-                q('#form-login-member').classList.replace('hidden', 'block');
-                q('#form-login-admin').classList.replace('block', 'hidden');
-                q('#btn-tab-member').className = 'px-4 py-2 rounded-lg bg-white shadow font-medium text-sm transition';
-                q('#btn-tab-admin').className = 'px-4 py-2 rounded-lg text-slate-500 font-medium text-sm transition hover:text-slate-900';
-            } else {
-                q('#form-login-admin').classList.replace('hidden', 'block');
-                q('#form-login-member').classList.replace('block', 'hidden');
-                q('#btn-tab-admin').className = 'px-4 py-2 rounded-lg bg-white shadow font-medium text-sm transition';
-                q('#btn-tab-member').className = 'px-4 py-2 rounded-lg text-slate-500 font-medium text-sm transition hover:text-slate-900';
-            }
-        };
-
-        window.switchAdminTab = (tabId) => {
-            document.querySelectorAll('.admin-view').forEach(el => el.classList.replace('block', 'hidden'));
-            document.querySelectorAll('.admin-tab').forEach(el => {
-                el.classList.remove('bg-slate-900', 'text-white');
-                el.classList.add('bg-white', 'text-slate-700');
-            });
-            q(`#admin-${tabId}`).classList.replace('hidden', 'block');
+            const overlay = document.getElementById('modal-overlay');
+            const content = document.getElementById('modal-content');
             
-            const activeBtn = q(`#tab-${tabId}`);
-            activeBtn.classList.remove('bg-white', 'text-slate-700');
-            activeBtn.classList.add('bg-slate-900', 'text-white');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            setTimeout(() => content.classList.remove('scale-95'), 10);
         };
 
-        // Firestore Path Helper (Strict compliance)
-        const getCol = (colName) => IS_PREVIEW ? collection(db, 'artifacts', appId, 'public', 'data', colName) : collection(db, colName);
-        const getDocRef = (colName, id) => IS_PREVIEW ? doc(db, 'artifacts', appId, 'public', 'data', colName, id) : doc(db, colName, id);
-
-        // UI Renderers
-        const formatRp = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
-        
-        const renderServices = () => {
-            const list = q('#services-list-public');
-            const select = q('#book-layanan');
-            list.innerHTML = '';
-            select.innerHTML = '<option value="">Pilih layanan...</option>';
+        window.closeModal = () => {
+            const overlay = document.getElementById('modal-overlay');
+            const content = document.getElementById('modal-content');
             
-            dataStore.services.forEach(s => {
-                // Public list
-                list.innerHTML += `
-                    <div class="glass p-5 rounded-2xl flex justify-between items-center hover:-translate-y-1 transition transform duration-300">
-                        <div><h4 class="font-bold text-lg">${s.nama}</h4><p class="text-xs text-slate-500 max-w-[200px] truncate">${s.desc}</p></div>
-                        <div class="text-right"><span class="font-bold text-slate-900 bg-slate-100 px-3 py-1 rounded-lg text-sm">${formatRp(s.harga)}</span></div>
-                    </div>`;
-                // Booking select
-                select.innerHTML += `<option value="${s.id}">${s.nama} - ${formatRp(s.harga)}</option>`;
-            });
-            renderAdminServices();
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+            }, 200);
         };
 
-        const renderBarbers = () => {
-            const list = q('#barbers-list-public');
-            const select = q('#book-barber');
-            list.innerHTML = '';
-            select.innerHTML = '<option value="">Pilih barber (Opsional/Bebas)...</option><option value="any">Siapa saja yang kosong</option>';
+        const menus = [
+            { id: 'home', label: 'Beranda', icon: 'fa-home', role: 'public' },
+            { id: 'catalog', label: 'Katalog', icon: 'fa-box', role: 'public' },
+            { id: 'cart', label: 'Keranjang', icon: 'fa-shopping-cart', role: 'public' },
+            { id: 'orders', label: 'Pesanan Saya', icon: 'fa-receipt', role: 'user' },
+            { id: 'auth', label: 'Login', icon: 'fa-sign-in-alt', role: 'guest' },
+            { id: 'admin-dashboard', label: 'Dashboard', icon: 'fa-chart-pie', role: 'admin' },
+            { id: 'admin-products', label: 'Produk', icon: 'fa-boxes', role: 'admin' },
+            { id: 'admin-orders', label: 'Pesanan Masuk', icon: 'fa-clipboard-list', role: 'admin' },
+            { id: 'admin-reports', label: 'Laporan', icon: 'fa-chart-line', role: 'admin' },
+        ];
+
+        window.navigate = (viewId) => {
+            // Role checking
+            const menu = menus.find(m => m.id === viewId) || { role: 'public' };
+            if(menu.role === 'user' && !currentUser) return navigate('auth');
+            if(menu.role === 'admin' && !currentAdmin) return navigate('auth');
             
-            dataStore.barbers.forEach(b => {
-                if(b.aktif) {
-                    list.innerHTML += `
-                        <div class="glass p-4 rounded-2xl text-center">
-                            <div class="w-24 h-24 mx-auto bg-slate-200 rounded-full mb-3 overflow-hidden border-4 border-white shadow-md">
-                                <img src="${b.foto || `https://ui-avatars.com/api/?name=${b.nama}&background=random`}" class="w-full h-full object-cover">
-                            </div>
-                            <h4 class="font-bold">${b.nama}</h4>
-                            <p class="text-xs text-slate-500 mb-2">${b.keahlian}</p>
-                            <span class="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold">Tersedia</span>
-                        </div>`;
-                    select.innerHTML += `<option value="${b.id}">${b.nama} (${b.keahlian})</option>`;
-                }
-            });
-            renderAdminBarbers();
-        };
-
-        const renderGalleryTesti = () => {
-            const gal = q('#gallery-grid');
-            gal.innerHTML = '';
-            for(let i=1; i<=8; i++) {
-                gal.innerHTML += `<div class="rounded-xl overflow-hidden shadow h-32 md:h-48"><img src="https://placehold.co/400x400/334155/ffffff?text=Style+${i}" class="w-full h-full object-cover hover:scale-110 transition duration-500 cursor-pointer"></div>`;
+            currentView = viewId;
+            
+            // Hide all, show target
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden-view'));
+            const targetEl = document.getElementById(`view-${viewId}`);
+            if(targetEl) {
+                targetEl.classList.remove('hidden-view');
+                window.scrollTo(0,0);
             }
 
-            const testi = q('#testimonial-list');
-            testi.innerHTML = '';
-            dataStore.testimonials.forEach(t => {
-                testi.innerHTML += `
-                    <div class="glass p-5 rounded-2xl relative">
-                        <div class="text-yellow-400 mb-2 text-sm">${'★'.repeat(t.rating)}${'☆'.repeat(5-t.rating)}</div>
-                        <p class="text-slate-600 text-sm mb-4 italic">"${t.komentar}"</p>
-                        <h5 class="font-bold text-sm">- ${t.nama}</h5>
-                    </div>`;
+            renderNav();
+            
+            // Trigger specific renders
+            if(viewId === 'home') renderHome();
+            if(viewId === 'catalog') renderCatalog();
+            if(viewId === 'cart') renderCart();
+            if(viewId === 'orders') renderUserOrders();
+            if(viewId === 'admin-dashboard') renderAdminDashboard();
+            if(viewId === 'admin-products') renderAdminProducts();
+            if(viewId === 'admin-orders') renderAdminOrders();
+            if(viewId === 'admin-reports') renderAdminReports();
+        };
+
+        const renderNav = () => {
+            const desktopNav = document.getElementById('nav-desktop');
+            const mobileNav = document.getElementById('bottom-nav');
+            const authSectionDesktop = document.getElementById('auth-section-desktop');
+            
+            desktopNav.innerHTML = '';
+            mobileNav.innerHTML = '';
+
+            let visibleMenus = menus.filter(m => {
+                if(currentAdmin) return m.role === 'admin' || m.role === 'public';
+                if(currentUser) return m.role === 'public' || m.role === 'user';
+                return m.role === 'public' || m.role === 'guest';
             });
-        };
 
-        const renderAdminBookings = () => {
-            const tbody = q('#admin-bookings-table');
-            tbody.innerHTML = '';
-            let todayCount = 0; let pendingCount = 0; let doneCount = 0;
-            const todayStr = new Date().toISOString().split('T')[0];
+            // Special case: hide cart from mobile bottom nav to save space, it's in header
+            const mobileVisibleMenus = visibleMenus.filter(m => m.id !== 'cart' && !m.id.startsWith('admin'));
 
-            dataStore.bookings.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).forEach(b => {
-                if(b.tanggal === todayStr) todayCount++;
-                if(b.status === 'Menunggu') pendingCount++;
-                if(b.status === 'Selesai') doneCount++;
-
-                const statusColor = b.status === 'Menunggu' ? 'bg-amber-100 text-amber-700' : (b.status === 'Dikonfirmasi' ? 'bg-blue-100 text-blue-700' : (b.status === 'Selesai' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'));
-                const srvName = dataStore.services.find(s=>s.id===b.id_layanan)?.nama || 'Layanan Dihapus';
-                const brbName = b.id_barber === 'any' ? 'Bebas' : (dataStore.barbers.find(x=>x.id===b.id_barber)?.nama || 'Tidak Diketahui');
-
-                tbody.innerHTML += `
-                    <tr class="border-b border-slate-100 hover:bg-slate-50/50">
-                        <td class="p-4"><p class="font-semibold">${b.nama_pelanggan}</p><p class="text-xs text-slate-500">${b.wa}</p></td>
-                        <td class="p-4"><p class="text-sm font-medium">${srvName}</p><p class="text-xs text-slate-500">Barber: ${brbName}</p></td>
-                        <td class="p-4"><p class="text-sm">${b.tanggal}</p><p class="text-xs font-bold text-slate-700">${b.jam}</p></td>
-                        <td class="p-4"><span class="px-2 py-1 rounded-md text-[10px] font-bold uppercase ${statusColor}">${b.status}</span></td>
-                        <td class="p-4">
-                            <select onchange="updateBookingStatus('${b.id}', this.value)" class="text-xs border rounded p-1 bg-white">
-                                <option value="" disabled selected>Aksi</option>
-                                <option value="Dikonfirmasi">Konfirmasi</option>
-                                <option value="Selesai">Selesai</option>
-                                <option value="Dibatalkan">Batalkan</option>
-                            </select>
-                        </td>
-                    </tr>
-                `;
+            // Desktop
+            visibleMenus.forEach(m => {
+                const isActive = currentView === m.id || (m.id==='catalog' && currentView==='detail') || (m.id==='cart' && currentView==='checkout');
+                const btn = document.createElement('button');
+                btn.onclick = () => navigate(m.id);
+                btn.className = `flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${isActive ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100 hover:text-blue-600'}`;
+                btn.innerHTML = `<i class="fas ${m.icon} w-5"></i> <span>${m.label}</span>`;
+                desktopNav.appendChild(btn);
             });
-            q('#stat-today').innerText = todayCount;
-            q('#stat-pending').innerText = pendingCount;
-            q('#stat-done').innerText = doneCount;
-        };
 
-        window.updateBookingStatus = async (id, status) => {
-            try {
-                await updateDoc(getDocRef('bookings', id), { status });
-                showToast(`Status diubah menjadi ${status}`, 'success');
-            } catch(e) { showToast('Gagal update', 'error'); }
-        };
+            // Mobile
+            mobileVisibleMenus.slice(0, 4).forEach(m => { // Max 4 items on mobile
+                const isActive = currentView === m.id || (m.id==='catalog' && currentView==='detail');
+                const btn = document.createElement('button');
+                btn.onclick = () => navigate(m.id);
+                btn.className = `flex flex-col items-center justify-center p-2 w-full ${isActive ? 'text-blue-600' : 'text-gray-500'}`;
+                btn.innerHTML = `<i class="fas ${m.icon} text-xl mb-1"></i> <span class="text-[10px] font-medium">${m.label}</span>`;
+                mobileNav.appendChild(btn);
+            });
+            
+            // Mobile special admin floating button if admin
+            if(currentAdmin && window.innerWidth <= 768) {
+                const btn = document.createElement('button');
+                btn.onclick = () => navigate('admin-dashboard');
+                btn.className = `flex flex-col items-center justify-center p-2 w-full ${currentView.startsWith('admin') ? 'text-blue-600' : 'text-gray-500'}`;
+                btn.innerHTML = `<i class="fas fa-user-shield text-xl mb-1"></i> <span class="text-[10px] font-medium">Admin</span>`;
+                mobileNav.appendChild(btn);
+            }
 
-        const renderAdminServices = () => {
-            const grid = q('#admin-services-grid');
-            grid.innerHTML = '';
-            q('#stat-services').innerText = dataStore.services.length;
-            dataStore.services.forEach(s => {
-                grid.innerHTML += `
-                    <div class="glass p-4 rounded-xl border border-slate-200">
-                        <h4 class="font-bold">${s.nama}</h4>
-                        <p class="text-slate-500 text-sm mb-3">${formatRp(s.harga)}</p>
-                        <div class="flex gap-2">
-                            <button onclick="editService('${s.id}')" class="flex-1 bg-slate-100 text-slate-700 py-1 rounded text-xs font-medium hover:bg-slate-200">Edit</button>
-                            <button onclick="delDoc('services', '${s.id}')" class="flex-1 bg-red-50 text-red-600 py-1 rounded text-xs font-medium hover:bg-red-100">Hapus</button>
+            // Auth Status Desktop
+            if(currentAdmin || currentUser) {
+                const name = currentAdmin ? 'Admin Panel' : currentUser.name;
+                const role = currentAdmin ? 'Administrator' : 'Pelanggan';
+                authSectionDesktop.innerHTML = `
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+                            <i class="fas fa-user"></i>
                         </div>
-                    </div>`;
-            });
-        };
-
-        const renderAdminBarbers = () => {
-            const grid = q('#admin-barbers-grid');
-            grid.innerHTML = '';
-            dataStore.barbers.forEach(b => {
-                grid.innerHTML += `
-                    <div class="glass p-4 rounded-xl border border-slate-200 text-center">
-                        <h4 class="font-bold">${b.nama}</h4>
-                        <p class="text-slate-500 text-xs mb-1">${b.keahlian}</p>
-                        <span class="text-[10px] mb-3 inline-block ${b.aktif ? 'text-green-600' : 'text-red-500'}">${b.aktif?'Aktif':'Non-aktif'}</span>
-                        <div class="flex gap-2">
-                            <button onclick="toggleBarberStatus('${b.id}', ${!b.aktif})" class="flex-1 bg-slate-100 py-1 rounded text-xs font-medium">${b.aktif?'Matikan':'Aktifkan'}</button>
-                            <button onclick="delDoc('barbers', '${b.id}')" class="bg-red-50 text-red-600 px-2 py-1 rounded text-xs"><i class="fas fa-trash"></i></button>
+                        <div class="overflow-hidden">
+                            <p class="text-sm font-bold text-gray-800 truncate">${name}</p>
+                            <p class="text-xs text-gray-500">${role}</p>
                         </div>
-                    </div>`;
-            });
-        };
-
-        const autoSetupDatabase = async () => {
-            try {
-                // We use simple gets. Avoid compound queries based on system rules.
-                const srvSnap = await getDocs(getCol('services'));
-                if (srvSnap.empty) {
-                    showToast('Menginisialisasi database pertama kali...', 'info');
-                    
-                    const initialServices = [
-                        { nama: 'Gentleman Haircut', harga: 60000, desc: 'Potong rambut + pijat ringan + pomade styling.' },
-                        { nama: 'Haircut & Wash', harga: 75000, desc: 'Cuci bersih, potong, hot towel, styling.' },
-                        { nama: 'Beard Trim & Line', harga: 40000, desc: 'Merapikan brewok dan kumis.' },
-                        { nama: 'Kids Haircut', harga: 50000, desc: 'Potong rambut khusus anak di bawah 12 tahun.' }
-                    ];
-                    for(let s of initialServices) await addDoc(getCol('services'), s);
-
-                    const initialBarbers = [
-                        { nama: 'Rico (Master)', keahlian: 'Classic Cuts, Fade', pengalaman: '5 Tahun', aktif: true },
-                        { nama: 'Beni (Senior)', keahlian: 'Hair Coloring, Styling', pengalaman: '3 Tahun', aktif: true }
-                    ];
-                    for(let b of initialBarbers) await addDoc(getCol('barbers'), b);
-
-                    const initialTesti = [
-                        { nama: 'Andi S.', rating: 5, komentar: 'Tempat nyaman, hasil potongan selalu memuaskan!' },
-                        { nama: 'Budi P.', rating: 5, komentar: 'Barber ramah dan asik diajak ngobrol. Mantap.' }
-                    ];
-                    for(let t of initialTesti) await addDoc(getCol('testimonials'), t);
-
-                    // Dummy User for Login testing
-                    await setDoc(getDocRef('users', '081234567890'), { nama: 'Pelanggan Demo', pin: '1234', created_at: Date.now() });
-
-                    showToast('Setup database berhasil!', 'success');
-                }
-            } catch (error) {
-                console.error("Auto Setup Error:", error);
-            }
-        };
-
-        // Listeners for Realtime Updates
-        const setupRealtimeListeners = () => {
-            onSnapshot(getCol('services'), (snap) => {
-                dataStore.services = snap.docs.map(d => ({id: d.id, ...d.data()})); renderServices();
-            }, (err) => console.log('Snap err services', err));
-
-            onSnapshot(getCol('barbers'), (snap) => {
-                dataStore.barbers = snap.docs.map(d => ({id: d.id, ...d.data()})); renderBarbers();
-            }, (err) => console.log('Snap err barbers', err));
-
-            onSnapshot(getCol('testimonials'), (snap) => {
-                dataStore.testimonials = snap.docs.map(d => ({id: d.id, ...d.data()})); renderGalleryTesti();
-            }, (err) => console.log('Snap err testi', err));
-
-            onSnapshot(getCol('bookings'), (snap) => {
-                dataStore.bookings = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                if(currentUser && currentUser.role === 'admin') renderAdminBookings();
-                if(currentUser && currentUser.role === 'member') renderMemberBookings();
-            }, (err) => console.log('Snap err bookings', err));
-        };
-
-        // Hybrid Login Logic
-        q('#form-login-member').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const wa = q('#login-wa').value;
-            const pin = q('#login-pin').value;
-            
-            try {
-                // Direct get by document ID (WA number) - extremely fast, no complex queries
-                const userDoc = await getDoc(getDocRef('users', wa));
-                if(userDoc.exists() && userDoc.data().pin === pin) {
-                    currentUser = { role: 'member', wa: wa, nama: userDoc.data().nama };
-                    showToast('Login berhasil', 'success');
-                    nav('member-dashboard');
-                    q('#member-name-display').innerText = currentUser.nama;
-                    renderMemberBookings();
-                } else {
-                    showToast('Nomor WA atau PIN salah!', 'error');
-                }
-            } catch (error) { showToast('Gagal login', 'error'); }
-        });
-
-        q('#form-login-admin').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = q('#admin-email').value;
-            const pass = q('#admin-pass').value;
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-            } catch (error) { showToast('Login admin gagal: ' + error.code, 'error'); }
-        });
-
-        const renderMemberBookings = () => {
-            if(!currentUser || currentUser.role !== 'member') return;
-            const myBookings = dataStore.bookings.filter(b => b.wa === currentUser.wa);
-            const container = q('#member-bookings');
-            container.innerHTML = '';
-            
-            if(myBookings.length === 0) {
-                container.innerHTML = '<p class="text-slate-500 text-sm">Belum ada history booking.</p>';
-                return;
-            }
-
-            myBookings.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).forEach(b => {
-                const sName = dataStore.services.find(s=>s.id===b.id_layanan)?.nama || 'Layanan';
-                const statusColor = b.status === 'Menunggu' ? 'bg-amber-100 text-amber-700' : (b.status === 'Selesai' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700');
-                container.innerHTML += `
-                    <div class="border border-slate-200 rounded-xl p-4 flex justify-between items-center">
-                        <div><p class="font-bold">${sName}</p><p class="text-xs text-slate-500">${b.tanggal} | ${b.jam}</p></div>
-                        <div><span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase ${statusColor}">${b.status}</span></div>
                     </div>
+                    <button onclick="logout()" class="w-full py-2 text-sm text-red-600 font-semibold border border-red-200 rounded-lg hover:bg-red-50 transition">Logout</button>
                 `;
-            });
+            } else {
+                authSectionDesktop.innerHTML = `
+                    <p class="text-xs text-gray-500 mb-2 text-center">Masuk untuk melihat pesanan.</p>
+                    <button onclick="navigate('auth')" class="w-full py-2 text-sm bg-blue-50 text-blue-600 font-semibold rounded-lg hover:bg-blue-100 transition">Login / Daftar</button>
+                `;
+            }
+
+            updateCartBadge();
+        };
+
+        const updateCartBadge = () => {
+            const qty = cart.reduce((sum, item) => sum + item.qty, 0);
+            const badge = document.getElementById('cart-badge-mobile');
+            if(qty > 0) {
+                badge.innerText = qty;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        };
+
+        const dbAPI = {
+            async getCollection(colName) {
+                if(IS_PREVIEW) return (colName === 'products') ? _mockProducts : (colName === 'categories' ? _mockCategories : (colName === 'orders' ? _mockOrders : _mockUsers));
+                
+                try {
+                    const snap = await getDocs(collection(db, colName));
+                    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                } catch(e) { console.error(e); return []; }
+            },
+            async getDocById(colName, id) {
+                if(IS_PREVIEW) {
+                    const data = await this.getCollection(colName);
+                    return data.find(item => item.id === id);
+                }
+                const docRef = doc(db, colName, id);
+                const snap = await getDoc(docRef);
+                return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+            },
+            async addDocToCollection(colName, data, forcedId = null) {
+                if(IS_PREVIEW) {
+                    const id = forcedId || generateId(colName.substring(0,3));
+                    const newItem = { id, ...data, createdAt: new Date().toISOString() };
+                    if(colName === 'products') _mockProducts.push(newItem);
+                    if(colName === 'orders') _mockOrders.push(newItem);
+                    if(colName === 'users') _mockUsers.push(newItem);
+                    if(colName === 'categories') _mockCategories.push(newItem);
+                    this.saveMockToLocal();
+                    return id;
+                }
+                if(forcedId) {
+                    await setDoc(doc(db, colName, forcedId), { ...data, createdAt: new Date().toISOString() });
+                    return forcedId;
+                } else {
+                    // Because user rule restriction, creating order needs to be standard add
+                    const colRef = collection(db, colName);
+                    // Native addDoc isn't imported to save space, using setDoc with random id
+                    const newId = generateId(colName.substring(0,3));
+                    await setDoc(doc(db, colName, newId), { ...data, createdAt: new Date().toISOString() });
+                    return newId;
+                }
+            },
+            async updateDocument(colName, id, data) {
+                if(IS_PREVIEW) {
+                    let col;
+                    if(colName === 'products') col = _mockProducts;
+                    if(colName === 'orders') col = _mockOrders;
+                    const index = col.findIndex(i => i.id === id);
+                    if(index !== -1) { col[index] = { ...col[index], ...data }; this.saveMockToLocal(); }
+                    return true;
+                }
+                await updateDoc(doc(db, colName, id), data);
+                return true;
+            },
+            async deleteDocument(colName, id) {
+                if(IS_PREVIEW) {
+                    if(colName === 'products') _mockProducts = _mockProducts.filter(i => i.id !== id);
+                    this.saveMockToLocal();
+                    return true;
+                }
+                await deleteDoc(doc(db, colName, id));
+                return true;
+            },
+            saveMockToLocal() {
+                localStorage.setItem('corpstore_mock', JSON.stringify({ p: _mockProducts, c: _mockCategories, u: _mockUsers, o: _mockOrders }));
+            },
+            loadMockFromLocal() {
+                const data = localStorage.getItem('corpstore_mock');
+                if(data) {
+                    const parsed = JSON.parse(data);
+                    _mockProducts = parsed.p || [];
+                    _mockCategories = parsed.c || [];
+                    _mockUsers = parsed.u || [];
+                    _mockOrders = parsed.o || [];
+                    return true;
+                }
+                return false;
+            }
+        };
+
+        window.autoSetupDatabase = async () => {
+            const products = await dbAPI.getCollection('products');
+            if(products && products.length > 0) return; // Already setup
+
+            console.log("Menjalankan Auto Setup Database...");
+            
+            // Add Categories
+            const cats = [{ name: 'Elektronik' }, { name: 'Alat Tulis Kantor' }, { name: 'Furnitur' }];
+            for(let c of cats) await dbAPI.addDocToCollection('categories', c);
+            
+            // Add Dummy User
+            await dbAPI.addDocToCollection('users', {
+                username: 'demo', password: 'password123', name: 'User Demo', whatsapp: '08123456789', address: 'Jl. Sudirman No. 1, Jakarta'
+            }, 'demo'); // forcedId = username for easier query if needed
+
+            // Add Products
+            const dummyProducts = [
+                { name: "Laptop Bisnis Pro 14\"", category: "Elektronik", price: 12500000, stock: 15, description: "Laptop tangguh untuk mobilitas kerja. RAM 16GB, SSD 512GB.", imageUrl: "https://placehold.co/400x400/e2e8f0/475569?text=Laptop+Pro", isFeatured: true, isNew: true },
+                { name: "Kertas HVS A4 80gsm (1 Dus)", category: "Alat Tulis Kantor", price: 250000, stock: 100, description: "Kertas berkualitas putih bersih, tidak mudah macet di printer. 1 Dus isi 5 rim.", imageUrl: "https://placehold.co/400x400/e2e8f0/475569?text=HVS+A4", isFeatured: true, isNew: false },
+                { name: "Kursi Ergonomis Kantor", category: "Furnitur", price: 1200000, stock: 25, description: "Kursi jaring dengan sandaran pinggang, nyaman untuk duduk berjam-jam.", imageUrl: "https://placehold.co/400x400/e2e8f0/475569?text=Kursi+Ergo", isFeatured: false, isNew: true },
+                { name: "Tinta Printer Hitam Original", category: "Alat Tulis Kantor", price: 115000, stock: 50, description: "Tinta original kapasitas tinggi.", imageUrl: "https://placehold.co/400x400/e2e8f0/475569?text=Tinta+Hitam", isFeatured: false, isNew: false },
+                { name: "Proyektor Rapat 1080p", category: "Elektronik", price: 4500000, stock: 5, description: "Proyektor jernih untuk presentasi memukau.", imageUrl: "https://placehold.co/400x400/e2e8f0/475569?text=Proyektor", isFeatured: true, isNew: false },
+            ];
+
+            for(let p of dummyProducts) await dbAPI.addDocToCollection('products', p);
+            
+            console.log("Auto Setup Selesai!");
+            showToast("Database awal berhasil dibuat!", "success");
+            
+            // Re-render
+            if(currentView === 'home') renderHome();
+            if(currentView === 'catalog') renderCatalog();
+        };
+
+        window.initApp = async () => {
+            // Load Cart from LocalStorage
+            const savedCart = localStorage.getItem('corpstore_cart');
+            if(savedCart) cart = JSON.parse(savedCart);
+            
+            if(IS_PREVIEW) {
+                console.log("Menjalankan Mode Preview (Local Data)");
+                if(!dbAPI.loadMockFromLocal()) {
+                    await autoSetupDatabase();
+                }
+                navigate('home');
+            } else {
+                try {
+                    // Import Firebase SDKs dynamically
+                    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js');
+                    const authModule = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js');
+                    const firestoreModule = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js');
+                    
+                    app = initializeApp(firebaseConfig);
+                    
+                    getAuth = authModule.getAuth;
+                    signInWithEmailAndPassword = authModule.signInWithEmailAndPassword;
+                    onAuthStateChanged = authModule.onAuthStateChanged;
+                    signOut = authModule.signOut;
+                    auth = getAuth(app);
+                    
+                    getFirestore = firestoreModule.getFirestore;
+                    collection = firestoreModule.collection;
+                    doc = firestoreModule.doc;
+                    getDocs = firestoreModule.getDocs;
+                    getDoc = firestoreModule.getDoc;
+                    setDoc = firestoreModule.setDoc;
+                    updateDoc = firestoreModule.updateDoc;
+                    deleteDoc = firestoreModule.deleteDoc;
+                    query = firestoreModule.query;
+                    where = firestoreModule.where;
+                    db = getFirestore(app);
+
+                    // Auth State Observer for Admin
+                    onAuthStateChanged(auth, async (user) => {
+                        if(user) {
+                            currentAdmin = user;
+                            currentUser = null; // Cannot be both
+                            showToast("Login Admin Berhasil", "success");
+                            if(currentView === 'auth') navigate('admin-dashboard');
+                        } else {
+                            currentAdmin = null;
+                        }
+                        renderNav();
+                    });
+
+                    await autoSetupDatabase();
+                    navigate('home');
+
+                } catch(e) {
+                    console.error("Firebase Init Error:", e);
+                    showToast("Gagal menghubungkan ke Firebase. Cek konfigurasi.", "error");
+                }
+            }
+            
+            setupPWA();
+        };
+
+        const setupPWA = () => {
+            const manifest = {
+                name: "CorpStore PWA",
+                short_name: "CorpStore",
+                start_url: ".",
+                display: "standalone",
+                background_color: "#ffffff",
+                theme_color: "#2563eb",
+                icons: [{ src: "https://placehold.co/192x192/2563eb/ffffff?text=CS", sizes: "192x192", type: "image/png" },
+                        { src: "https://placehold.co/512x512/2563eb/ffffff?text=CS", sizes: "512x512", type: "image/png" }]
+            };
+            const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+            document.getElementById('manifest').href = URL.createObjectURL(manifestBlob);
+
+            // Catatan: Browser menolak pendaftaran Service Worker menggunakan URL 'blob:' demi keamanan.
+            // Karena ini adalah arsitektur 1-file murni, kita melewati pendaftaran Service Worker 
+            // agar tidak menimbulkan Error di Console. Manifest PWA tetap terpasang.
+            console.log("PWA Manifest berhasil dimuat secara dinamis.");
+        };
+
+        window.switchAuthTab = (type) => {
+            const tUser = document.getElementById('tab-login-user');
+            const tAdmin = document.getElementById('tab-login-admin');
+            const fUser = document.getElementById('form-login-user');
+            const fAdmin = document.getElementById('form-login-admin');
+            
+            if(type === 'user') {
+                tUser.classList.add('text-blue-600', 'border-b-2', 'border-blue-600'); tUser.classList.remove('text-gray-500');
+                tAdmin.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600'); tAdmin.classList.add('text-gray-500');
+                fUser.classList.remove('hidden'); fAdmin.classList.add('hidden');
+            } else {
+                tAdmin.classList.add('text-blue-600', 'border-b-2', 'border-blue-600'); tAdmin.classList.remove('text-gray-500');
+                tUser.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600'); tUser.classList.add('text-gray-500');
+                fAdmin.classList.remove('hidden'); fUser.classList.add('hidden');
+            }
+        };
+
+        window.handleUserAuth = async (action) => {
+            const user = document.getElementById('auth-username').value.trim();
+            const pass = document.getElementById('auth-password').value;
+            if(!user || !pass) return showToast("Username dan password wajib diisi", "error");
+
+            if(action === 'login') {
+                const users = await dbAPI.getCollection('users');
+                const matchedUser = users.find(u => u.username === user && u.password === pass);
+                if(matchedUser) {
+                    currentUser = matchedUser;
+                    currentAdmin = null;
+                    if(!IS_PREVIEW && auth) await signOut(auth); // Ensure admin is logged out
+                    showToast(`Selamat datang, ${matchedUser.name || matchedUser.username}!`, "success");
+                    navigate('home');
+                } else {
+                    showToast("Username atau Password salah!", "error");
+                }
+            } else if(action === 'register') {
+                const html = `
+                    <input type="text" id="reg-name" placeholder="Nama Lengkap" class="w-full mb-3 px-3 py-2 border rounded outline-none focus:border-blue-500">
+                    <input type="text" id="reg-wa" placeholder="Nomor WhatsApp" class="w-full mb-3 px-3 py-2 border rounded outline-none focus:border-blue-500">
+                    <textarea id="reg-addr" placeholder="Alamat Lengkap" class="w-full px-3 py-2 border rounded outline-none focus:border-blue-500" rows="2"></textarea>
+                `;
+                const btns = `
+                    <button onclick="closeModal()" class="px-4 py-2 text-gray-600 bg-gray-100 rounded hover:bg-gray-200">Batal</button>
+                    <button onclick="submitRegister('${user}', '${pass}')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Daftar Sekarang</button>
+                `;
+                showModal("Lengkapi Data Profil", html, btns);
+            }
+        };
+
+        window.submitRegister = async (user, pass) => {
+            const name = document.getElementById('reg-name').value;
+            const wa = document.getElementById('reg-wa').value;
+            const addr = document.getElementById('reg-addr').value;
+            
+            const users = await dbAPI.getCollection('users');
+            if(users.find(u => u.username === user)) {
+                closeModal();
+                return showToast("Username sudah digunakan!", "error");
+            }
+            
+            const newUser = { username: user, password: pass, name, whatsapp: wa, address: addr };
+            await dbAPI.addDocToCollection('users', newUser, user);
+            closeModal();
+            showToast("Pendaftaran berhasil! Silakan login.", "success");
+        };
+
+        window.handleAdminAuth = async () => {
+            const email = document.getElementById('auth-admin-email').value;
+            const pass = document.getElementById('auth-admin-password').value;
+            if(!email || !pass) return showToast("Email dan password wajib diisi", "error");
+
+            if(IS_PREVIEW) {
+                if(email === 'admin@corp.com' && pass === 'admin123') {
+                    currentAdmin = { email }; currentUser = null;
+                    showToast("Login Admin Berhasil (Mock)", "success");
+                    navigate('admin-dashboard');
+                } else {
+                    showToast("Coba: admin@corp.com / admin123", "error");
+                }
+            } else {
+                try {
+                    await signInWithEmailAndPassword(auth, email, pass);
+                    // onAuthStateChanged will handle navigation
+                } catch(e) {
+                    showToast("Gagal login: " + e.message, "error");
+                }
+            }
         };
 
         window.logout = async () => {
-            if(currentUser?.role === 'admin') await signOut(auth);
+            if(!IS_PREVIEW && currentAdmin && auth) await signOut(auth);
             currentUser = null;
-            nav('home');
-            showToast('Berhasil keluar', 'success');
+            currentAdmin = null;
+            showToast("Berhasil logout", "success");
+            navigate('home');
         };
 
-        // Form Submit Booking
-        q('#booking-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        window.renderHome = async () => {
+            const prods = await dbAPI.getCollection('products');
+            const cats = await dbAPI.getCollection('categories');
             
-            // Check auth rule: Must be signed in anonymously or custom token before writing if using App IDE
-            if(IS_PREVIEW && !auth.currentUser) {
-                if(typeof __initial_auth_token !== 'undefined') {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+            // Categories
+            const catContainer = document.getElementById('home-categories');
+            catContainer.innerHTML = cats.map(c => `
+                <button onclick="navigate('catalog'); filterCatalog('${c.name}')" class="flex-shrink-0 px-5 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:border-blue-500 hover:text-blue-600 transition shadow-sm whitespace-nowrap">
+                    ${c.name}
+                </button>
+            `).join('');
+
+            const renderProdCard = (p) => `
+                <div class="glass-solid rounded-2xl overflow-hidden hover:shadow-lg transition group cursor-pointer flex flex-col h-full" onclick="showDetail('${p.id}')">
+                    <div class="relative h-40 md:h-48 overflow-hidden bg-gray-100">
+                        <img src="${p.imageUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="${p.name}" onerror="this.src='https://placehold.co/400x400/e2e8f0/475569?text=No+Image'">
+                        ${p.stock <= 0 ? '<div class="absolute inset-0 bg-black/50 flex items-center justify-center"><span class="text-white font-bold px-3 py-1 bg-red-500 rounded-lg text-xs">Habis</span></div>' : ''}
+                    </div>
+                    <div class="p-4 flex flex-col flex-grow">
+                        <span class="text-[10px] uppercase font-bold tracking-wider text-gray-400 mb-1">${p.category}</span>
+                        <h4 class="font-bold text-gray-800 text-sm md:text-base leading-tight mb-2 line-clamp-2 flex-grow">${p.name}</h4>
+                        <div class="flex justify-between items-end mt-auto">
+                            <span class="font-bold text-blue-600 text-sm md:text-base">${formatRp(p.price)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('home-featured-products').innerHTML = prods.filter(p => p.isFeatured).slice(0, 4).map(renderProdCard).join('') || '<p class="text-gray-500 text-sm col-span-full">Belum ada produk unggulan.</p>';
+            document.getElementById('home-new-products').innerHTML = prods.filter(p => p.isNew).slice(0, 8).map(renderProdCard).join('') || '<p class="text-gray-500 text-sm col-span-full">Belum ada produk terbaru.</p>';
+        };
+
+        window.renderCatalog = async () => {
+            const prods = await dbAPI.getCollection('products');
+            const cats = await dbAPI.getCollection('categories');
+            
+            const filterSelect = document.getElementById('catalog-category-filter');
+            if(filterSelect.options.length <= 1) { // Populate only once
+                cats.forEach(c => filterSelect.add(new Option(c.name, c.name)));
             }
 
-            const wa = q('#book-wa').value;
-            const nama = q('#book-nama').value;
-            const id_layanan = q('#book-layanan').value;
-            const id_barber = q('#book-barber').value;
+            const input = document.getElementById('catalog-search');
             
-            const bookingData = {
-                wa, nama_pelanggan: nama, id_layanan, id_barber,
-                tanggal: q('#book-tanggal').value, jam: q('#book-jam').value,
-                catatan: q('#book-catatan').value, status: 'Menunggu',
-                created_at: Date.now()
+            const drawGrid = () => {
+                const q = input.value.toLowerCase();
+                const cat = filterSelect.value;
+                const filtered = prods.filter(p => 
+                    p.name.toLowerCase().includes(q) && (cat === 'all' || p.category === cat)
+                );
+                
+                const container = document.getElementById('catalog-products');
+                if(filtered.length === 0) {
+                    container.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500"><i class="fas fa-search mb-2 text-2xl opacity-50"></i><br>Produk tidak ditemukan.</div>`;
+                    return;
+                }
+                
+                container.innerHTML = filtered.map(p => `
+                    <div class="glass-solid rounded-2xl overflow-hidden hover:shadow-lg transition group cursor-pointer flex flex-col h-full" onclick="showDetail('${p.id}')">
+                        <div class="h-40 md:h-48 overflow-hidden bg-gray-100 relative">
+                            <img src="${p.imageUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="${p.name}" onerror="this.src='https://placehold.co/400x400/e2e8f0/475569?text=No+Image'">
+                            ${p.stock <= 0 ? '<div class="absolute inset-0 bg-black/50 flex items-center justify-center"><span class="text-white font-bold px-3 py-1 bg-red-500 rounded-lg text-xs">Habis</span></div>' : ''}
+                        </div>
+                        <div class="p-4 flex flex-col flex-grow">
+                            <span class="text-[10px] uppercase font-bold text-gray-400 mb-1">${p.category}</span>
+                            <h4 class="font-bold text-gray-800 text-sm md:text-base leading-tight mb-2 line-clamp-2 flex-grow">${p.name}</h4>
+                            <span class="font-bold text-blue-600 text-sm md:text-base">${formatRp(p.price)}</span>
+                        </div>
+                    </div>
+                `).join('');
             };
 
-            try {
-                // Auto create user doc if not exist for login purpose
-                const userRef = getDocRef('users', wa);
-                const userDoc = await getDoc(userRef);
-                if(!userDoc.exists()) {
-                    await setDoc(userRef, { nama, pin: '1234', created_at: Date.now() });
-                }
+            input.oninput = drawGrid;
+            filterSelect.onchange = drawGrid;
+            drawGrid(); // Initial draw
+        };
 
-                await addDoc(getCol('bookings'), bookingData);
-                showToast('Booking berhasil! Gunakan nomor WA & PIN 1234 untuk login.', 'success');
-                q('#booking-form').reset();
-                
-                // Set logic member login automaticaly
-                currentUser = { role: 'member', wa, nama };
-                nav('member-dashboard');
-                q('#member-name-display').innerText = currentUser.nama;
-            } catch (error) {
-                showToast('Gagal memproses booking', 'error');
-                console.error(error);
+        window.filterCatalog = (catName) => {
+            const filterSelect = document.getElementById('catalog-category-filter');
+            if(filterSelect) filterSelect.value = catName;
+            // The onchange event won't trigger programmatically, so wait for catalog render then re-draw manually or rely on state.
+            // Since navigation might be async if we refactor, let's trigger dispatch
+            setTimeout(() => filterSelect.dispatchEvent(new Event('change')), 50);
+        };
+
+        window.showDetail = async (id) => {
+            const p = await dbAPI.getDocById('products', id);
+            if(!p) return showToast("Produk tidak ditemukan", "error");
+            
+            navigate('detail');
+            const container = document.getElementById('detail-container');
+            container.innerHTML = `
+                <div class="flex flex-col md:flex-row gap-8">
+                    <div class="w-full md:w-1/2">
+                        <div class="rounded-2xl overflow-hidden bg-gray-100 border border-gray-200">
+                            <img src="${p.imageUrl}" class="w-full h-auto object-cover" alt="${p.name}" onerror="this.src='https://placehold.co/400x400/e2e8f0/475569?text=No+Image'">
+                        </div>
+                    </div>
+                    <div class="w-full md:w-1/2 flex flex-col justify-center">
+                        <span class="inline-block px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-lg w-max mb-3 uppercase tracking-wider">${p.category}</span>
+                        <h2 class="text-2xl md:text-4xl font-bold text-gray-800 mb-2">${p.name}</h2>
+                        <div class="text-3xl font-bold text-blue-600 mb-6">${formatRp(p.price)}</div>
+                        
+                        <p class="text-gray-600 mb-6 leading-relaxed">${p.description || 'Tidak ada deskripsi.'}</p>
+                        
+                        <div class="flex items-center gap-4 mb-6">
+                            <span class="text-sm font-medium text-gray-600">Stok: <span class="${p.stock > 0 ? 'text-green-600' : 'text-red-500'} font-bold">${p.stock}</span></span>
+                        </div>
+                        
+                        ${p.stock > 0 ? `
+                        <div class="flex items-center gap-4 mb-6">
+                            <span class="text-sm font-medium text-gray-700">Jumlah:</span>
+                            <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden w-28">
+                                <button onclick="document.getElementById('dtl-qty').value = Math.max(1, parseInt(document.getElementById('dtl-qty').value)-1)" class="w-8 h-10 bg-gray-50 hover:bg-gray-200 flex items-center justify-center font-bold text-gray-600 transition">-</button>
+                                <input type="number" id="dtl-qty" value="1" min="1" max="${p.stock}" class="w-12 h-10 text-center focus:outline-none font-bold text-gray-800 appearance-none bg-white">
+                                <button onclick="document.getElementById('dtl-qty').value = Math.min(${p.stock}, parseInt(document.getElementById('dtl-qty').value)+1)" class="w-8 h-10 bg-gray-50 hover:bg-gray-200 flex items-center justify-center font-bold text-gray-600 transition">+</button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <button onclick="addToCart('${p.id}', false)" class="flex-1 border-2 border-blue-600 text-blue-600 py-3 rounded-xl font-bold hover:bg-blue-50 transition flex items-center justify-center gap-2">
+                                <i class="fas fa-cart-plus"></i> Tambah Keranjang
+                            </button>
+                            <button onclick="addToCart('${p.id}', true)" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30">
+                                Beli Sekarang
+                            </button>
+                        </div>
+                        ` : `<div class="p-4 bg-red-50 text-red-600 rounded-xl font-bold text-center">Maaf, Stok Habis</div>`}
+                    </div>
+                </div>
+            `;
+        };
+
+        window.addToCart = async (id, buyNow = false) => {
+            const p = await dbAPI.getDocById('products', id);
+            const qtyInput = document.getElementById('dtl-qty');
+            const qty = qtyInput ? parseInt(qtyInput.value) : 1;
+
+            if(!p || p.stock < qty) return showToast("Stok tidak mencukupi!", "error");
+
+            const existing = cart.find(item => item.id === id);
+            if(existing) {
+                if(existing.qty + qty > p.stock) return showToast("Maksimal stok tercapai di keranjang", "warning");
+                existing.qty += qty;
+            } else {
+                cart.push({ id: p.id, name: p.name, price: p.price, imageUrl: p.imageUrl, qty: qty, maxStock: p.stock });
             }
-        });
-
-        // Admin CRUD Modals
-        window.showModalForm = (type) => {
-            const content = type === 'service' ? q('#form-tpl-service').innerHTML : q('#form-tpl-barber').innerHTML;
-            showModal(`Tambah ${type === 'service'?'Layanan':'Barber'}`, content);
             
-            // Re-bind click after innerHTML injection
-            q('#custom-modal button[onclick^="save"]').setAttribute('onclick', type === 'service' ? 'saveService(true)' : 'saveBarber(true)');
-        };
-
-        window.saveService = async (isNew = false) => {
-            const nama = q('#srv-nama').value;
-            const harga = parseInt(q('#srv-harga').value);
-            const desc = q('#srv-desc').value;
-            if(!nama || !harga) return showToast('Lengkapi data', 'error');
-            try {
-                await addDoc(getCol('services'), { nama, harga, desc });
-                closeModal(); showToast('Tersimpan', 'success');
-            } catch(e) { showToast('Error', 'error'); }
-        };
-
-        window.saveBarber = async () => {
-            const nama = q('#brb-nama').value;
-            const keahlian = q('#brb-keahlian').value;
-            const pengalaman = q('#brb-pengalaman').value;
-            if(!nama) return showToast('Lengkapi nama', 'error');
-            try {
-                await addDoc(getCol('barbers'), { nama, keahlian, pengalaman, aktif: true });
-                closeModal(); showToast('Tersimpan', 'success');
-            } catch(e) { showToast('Error', 'error'); }
-        };
-
-        window.delDoc = async (colName, id) => {
-            try {
-                await deleteDoc(getDocRef(colName, id));
-                showToast('Terhapus', 'success');
-            } catch(e) { showToast('Gagal menghapus', 'error'); }
-        };
-        
-        window.toggleBarberStatus = async (id, status) => {
-            try {
-                await updateDoc(getDocRef('barbers', id), { aktif: status });
-            } catch(e) { showToast('Error', 'error'); }
-        }
-
-        // Init App
-        window.onload = async () => {
-            setupPWA();
+            saveCart();
+            updateCartBadge();
+            showToast("Ditambahkan ke keranjang!", "success");
             
-            // Handle Auth State changes for Admin
-            onAuthStateChanged(auth, (user) => {
-                if(user && !user.isAnonymous) {
-                    // Admin logged in via Email/Pass
-                    currentUser = { role: 'admin', uid: user.uid };
-                    nav('admin-dashboard');
-                    renderAdminBookings();
-                } else if (!currentUser || currentUser.role !== 'member') {
-                    // If not admin and not explicitly member, reset
-                    currentUser = null;
+            if(buyNow) navigate('cart');
+        };
+
+        const saveCart = () => {
+            localStorage.setItem('corpstore_cart', JSON.stringify(cart));
+        };
+
+        window.renderCart = () => {
+            const container = document.getElementById('cart-items-container');
+            const btnCo = document.getElementById('btn-proceed-checkout');
+            
+            if(cart.length === 0) {
+                container.innerHTML = `
+                    <div class="glass-solid p-10 rounded-2xl text-center">
+                        <i class="fas fa-shopping-cart text-5xl text-gray-300 mb-4"></i>
+                        <h3 class="text-xl font-bold text-gray-700 mb-2">Keranjang Kosong</h3>
+                        <p class="text-gray-500 mb-6">Yuk, mulai penuhi keranjangmu dengan produk terbaik kami!</p>
+                        <button onclick="navigate('catalog')" class="bg-blue-600 text-white px-6 py-2.5 rounded-full font-semibold hover:bg-blue-700 transition">Belanja Sekarang</button>
+                    </div>`;
+                document.getElementById('cart-summary-qty').innerText = "0";
+                document.getElementById('cart-summary-subtotal').innerText = "Rp 0";
+                document.getElementById('cart-summary-total').innerText = "Rp 0";
+                btnCo.disabled = true;
+                return;
+            }
+            btnCo.disabled = false;
+
+            let html = '<div class="flex flex-col gap-4">';
+            let totalQty = 0, subtotal = 0;
+
+            cart.forEach((item, index) => {
+                totalQty += item.qty;
+                const itemTotal = item.qty * item.price;
+                subtotal += itemTotal;
+                
+                html += `
+                    <div class="glass-solid p-4 rounded-2xl flex items-center gap-4 border border-transparent hover:border-gray-200 transition">
+                        <img src="${item.imageUrl}" class="w-20 h-20 rounded-xl object-cover bg-gray-100" onerror="this.src='https://placehold.co/100x100'">
+                        <div class="flex-grow">
+                            <h4 class="font-bold text-gray-800 line-clamp-1">${item.name}</h4>
+                            <div class="text-blue-600 font-bold mb-2">${formatRp(item.price)}</div>
+                            <div class="flex items-center gap-6">
+                                <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden w-24 h-8">
+                                    <button onclick="updateCartQty(${index}, -1)" class="w-8 h-full bg-gray-50 hover:bg-gray-200 flex items-center justify-center font-bold text-gray-600 transition">-</button>
+                                    <span class="w-8 h-full flex items-center justify-center font-bold text-sm text-gray-800 bg-white">${item.qty}</span>
+                                    <button onclick="updateCartQty(${index}, 1)" class="w-8 h-full bg-gray-50 hover:bg-gray-200 flex items-center justify-center font-bold text-gray-600 transition">+</button>
+                                </div>
+                                <button onclick="removeFromCart(${index})" class="text-red-400 hover:text-red-600 transition p-2" title="Hapus"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <div class="hidden md:block text-right font-bold text-gray-800 ml-4">${formatRp(itemTotal)}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            container.innerHTML = html;
+            document.getElementById('cart-summary-qty').innerText = totalQty;
+            document.getElementById('cart-summary-subtotal').innerText = formatRp(subtotal);
+            document.getElementById('cart-summary-total').innerText = formatRp(subtotal);
+        };
+
+        window.updateCartQty = (index, delta) => {
+            const item = cart[index];
+            const newQty = item.qty + delta;
+            if(newQty > 0 && newQty <= item.maxStock) {
+                item.qty = newQty;
+                saveCart();
+                renderCart();
+                updateCartBadge();
+            } else if (newQty > item.maxStock) {
+                showToast("Stok maksimal tercapai", "warning");
+            }
+        };
+
+        window.removeFromCart = (index) => {
+            cart.splice(index, 1);
+            saveCart();
+            renderCart();
+            updateCartBadge();
+        };
+
+        window.proceedToCheckout = () => {
+            if(!currentUser) {
+                showToast("Silakan login/daftar terlebih dahulu sebelum checkout", "info");
+                return navigate('auth');
+            }
+            navigate('checkout');
+            
+            // Populate user data
+            document.getElementById('co-name').value = currentUser.name || '';
+            document.getElementById('co-wa').value = currentUser.whatsapp || '';
+            document.getElementById('co-address').value = currentUser.address || '';
+            
+            // Populate summary list
+            let total = 0;
+            const listEl = document.getElementById('co-items-list');
+            listEl.innerHTML = cart.map(item => {
+                total += item.price * item.qty;
+                return `
+                <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                    <div>
+                        <p class="font-semibold text-gray-800 text-sm line-clamp-1">${item.name}</p>
+                        <p class="text-xs text-gray-500">${item.qty} x ${formatRp(item.price)}</p>
+                    </div>
+                    <div class="font-bold text-gray-800 text-sm">${formatRp(item.qty * item.price)}</div>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('co-total-amount').innerText = formatRp(total);
+        };
+
+        window.processCheckout = async () => {
+            const name = document.getElementById('co-name').value.trim();
+            const wa = document.getElementById('co-wa').value.trim();
+            const address = document.getElementById('co-address').value.trim();
+            const note = document.getElementById('co-note').value.trim();
+            const method = document.querySelector('input[name="payment-method"]:checked').value;
+            
+            if(!name || !wa || !address) return showToast("Mohon lengkapi data pengiriman!", "error");
+            
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            
+            const orderId = `ORD-${Date.now().toString().slice(-6)}`;
+            const orderData = {
+                orderId: orderId,
+                username: currentUser.username,
+                customerData: { name, whatsapp: wa, address, note },
+                items: cart,
+                paymentMethod: method,
+                totalAmount: total,
+                status: 'Menunggu Pembayaran'
+            };
+            
+            try {
+                showToast("Memproses pesanan...", "info");
+                // Update Stock
+                for(let item of cart) {
+                    const p = await dbAPI.getDocById('products', item.id);
+                    if(p && p.stock >= item.qty) {
+                        await dbAPI.updateDocument('products', item.id, { stock: p.stock - item.qty });
+                    }
                 }
+                
+                await dbAPI.addDocToCollection('orders', orderData, orderId); // Save Order
+                
+                cart = []; // Empty cart
+                saveCart();
+                updateCartBadge();
+                
+                showToast("Pesanan Berhasil Dibuat!", "success");
+                navigate('orders');
+            } catch(e) {
+                console.error(e);
+                showToast("Terjadi kesalahan saat memproses pesanan.", "error");
+            }
+        };
+
+        window.renderUserOrders = async () => {
+            if(!currentUser) return;
+            const orders = await dbAPI.getCollection('orders');
+            const myOrders = orders.filter(o => o.username === currentUser.username).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            const tbody = document.getElementById('user-orders-table');
+            const emptyState = document.getElementById('user-orders-empty');
+            
+            if(myOrders.length === 0) {
+                tbody.parentNode.parentNode.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            tbody.parentNode.parentNode.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            
+            const statusColor = (s) => {
+                if(s === 'Menunggu Pembayaran') return 'bg-yellow-100 text-yellow-700';
+                if(s === 'Diproses') return 'bg-blue-100 text-blue-700';
+                if(s === 'Dikirim') return 'bg-purple-100 text-purple-700';
+                if(s === 'Selesai') return 'bg-green-100 text-green-700';
+                return 'bg-red-100 text-red-700';
+            };
+
+            tbody.innerHTML = myOrders.map(o => {
+                const date = new Date(o.createdAt).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric'});
+                return `
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-4 font-medium text-gray-800">${o.orderId}</td>
+                        <td class="p-4 text-gray-600">${date}</td>
+                        <td class="p-4 font-bold text-gray-800">${formatRp(o.totalAmount)}</td>
+                        <td class="p-4"><span class="px-2 py-1 rounded-md text-xs font-bold whitespace-nowrap ${statusColor(o.status)}">${o.status}</span></td>
+                        <td class="p-4 text-center">
+                            <button onclick="viewOrderDetails('${o.id}')" class="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg text-xs font-bold transition">Detail</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        window.viewOrderDetails = async (id) => {
+            const o = await dbAPI.getDocById('orders', id);
+            if(!o) return;
+
+            let itemsHtml = o.items.map(i => `
+                <div class="flex justify-between items-center py-2 text-sm border-b border-gray-100">
+                    <span>${i.qty}x ${i.name}</span>
+                    <span class="font-semibold">${formatRp(i.qty * i.price)}</span>
+                </div>
+            `).join('');
+
+            const html = `
+                <div class="mb-4">
+                    <p class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Informasi Pengiriman</p>
+                    <p class="font-semibold text-gray-800">${o.customerData.name} <span class="text-gray-500 font-normal">(${o.customerData.whatsapp})</span></p>
+                    <p class="text-sm text-gray-600 mt-1">${o.customerData.address}</p>
+                    ${o.customerData.note ? `<p class="text-xs text-gray-500 mt-1 italic">Catatan: ${o.customerData.note}</p>` : ''}
+                </div>
+                <div class="mb-4">
+                    <p class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Metode Pembayaran</p>
+                    <p class="font-semibold text-gray-800">${o.paymentMethod}</p>
+                </div>
+                <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                    <p class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2 border-b pb-1">Daftar Produk</p>
+                    ${itemsHtml}
+                    <div class="flex justify-between items-center pt-2 mt-2 border-t border-gray-200">
+                        <span class="font-bold">Total</span>
+                        <span class="font-bold text-lg text-blue-600">${formatRp(o.totalAmount)}</span>
+                    </div>
+                </div>
+            `;
+            const actionHtml = `<button onclick="closeModal()" class="w-full py-2 bg-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-300">Tutup</button>`;
+            showModal(`Detail Pesanan: ${o.orderId}`, html, actionHtml);
+        };
+
+        window.renderAdminDashboard = async () => {
+            const prods = await dbAPI.getCollection('products');
+            const orders = await dbAPI.getCollection('orders');
+            
+            document.getElementById('stat-products').innerText = prods.length;
+            document.getElementById('stat-orders').innerText = orders.length;
+            
+            let rev = 0;
+            let newOrd = 0;
+            orders.forEach(o => {
+                if(o.status === 'Selesai') rev += o.totalAmount;
+                if(o.status === 'Menunggu Pembayaran' || o.status === 'Diproses') newOrd++;
+            });
+            
+            document.getElementById('stat-revenue').innerText = formatRp(rev);
+            document.getElementById('stat-new-orders').innerText = newOrd;
+        };
+
+        window.renderAdminProducts = async () => {
+            const prods = await dbAPI.getCollection('products');
+            const tbody = document.getElementById('admin-products-table');
+            
+            if(prods.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500">Tidak ada produk. Silakan tambah.</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = prods.map(p => `
+                <tr class="hover:bg-gray-50 transition border-b border-gray-50 last:border-0">
+                    <td class="p-3"><img src="${p.imageUrl}" class="w-10 h-10 rounded object-cover" onerror="this.src='https://placehold.co/100'"></td>
+                    <td class="p-3 font-medium text-gray-800 line-clamp-1">${p.name}</td>
+                    <td class="p-3 text-gray-600 text-xs"><span class="bg-gray-200 px-2 py-1 rounded">${p.category}</span></td>
+                    <td class="p-3 font-bold text-gray-800">${formatRp(p.price)}</td>
+                    <td class="p-3"><span class="${p.stock > 0 ? 'text-green-600' : 'text-red-500'} font-bold">${p.stock}</span></td>
+                    <td class="p-3 text-center">
+                        <div class="flex justify-center gap-2">
+                            <button onclick="openProductModal('${p.id}')" class="text-blue-500 hover:bg-blue-50 p-1.5 rounded" title="Edit"><i class="fas fa-edit"></i></button>
+                            <button onclick="confirmDeleteProduct('${p.id}')" class="text-red-500 hover:bg-red-50 p-1.5 rounded" title="Hapus"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        };
+
+        window.openProductModal = async (id = null) => {
+            let p = { name: '', price: '', stock: '', category: 'Elektronik', description: '', imageUrl: '', isFeatured: false, isNew: true };
+            if(id) {
+                p = await dbAPI.getDocById('products', id);
+            }
+            
+            const cats = await dbAPI.getCollection('categories');
+            const catOptions = cats.map(c => `<option value="${c.name}" ${p.category === c.name ? 'selected' : ''}>${c.name}</option>`).join('');
+
+            const html = `
+                <input type="hidden" id="frm-id" value="${id || ''}">
+                <div class="mb-3">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Nama Produk</label>
+                    <input type="text" id="frm-name" value="${p.name}" class="w-full px-3 py-2 border rounded outline-none focus:border-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Harga (Rp)</label>
+                        <input type="number" id="frm-price" value="${p.price}" class="w-full px-3 py-2 border rounded outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Stok</label>
+                        <input type="number" id="frm-stock" value="${p.stock}" class="w-full px-3 py-2 border rounded outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Kategori</label>
+                    <select id="frm-cat" class="w-full px-3 py-2 border rounded outline-none focus:border-blue-500">${catOptions}</select>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">URL Gambar (opsional/placehold)</label>
+                    <input type="text" id="frm-img" value="${p.imageUrl}" placeholder="https://..." class="w-full px-3 py-2 border rounded outline-none focus:border-blue-500">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Deskripsi</label>
+                    <textarea id="frm-desc" rows="2" class="w-full px-3 py-2 border rounded outline-none focus:border-blue-500">${p.description}</textarea>
+                </div>
+                <div class="flex gap-4">
+                    <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="frm-feat" ${p.isFeatured ? 'checked' : ''}> Produk Unggulan</label>
+                    <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="frm-new" ${p.isNew ? 'checked' : ''}> Produk Baru</label>
+                </div>
+            `;
+            const actionHtml = `
+                <button onclick="closeModal()" class="px-4 py-2 text-gray-600 bg-gray-100 rounded hover:bg-gray-200">Batal</button>
+                <button onclick="saveProduct()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Simpan</button>
+            `;
+            showModal(id ? "Edit Produk" : "Tambah Produk", html, actionHtml);
+        };
+
+        window.saveProduct = async () => {
+            const id = document.getElementById('frm-id').value;
+            const data = {
+                name: document.getElementById('frm-name').value,
+                price: parseInt(document.getElementById('frm-price').value || 0),
+                stock: parseInt(document.getElementById('frm-stock').value || 0),
+                category: document.getElementById('frm-cat').value,
+                imageUrl: document.getElementById('frm-img').value || `https://placehold.co/400x400/e2e8f0/475569?text=${encodeURIComponent(document.getElementById('frm-name').value)}`,
+                description: document.getElementById('frm-desc').value,
+                isFeatured: document.getElementById('frm-feat').checked,
+                isNew: document.getElementById('frm-new').checked
+            };
+            
+            if(!data.name || data.price <= 0) return showToast("Nama dan Harga wajib valid", "error");
+
+            if(id) {
+                await dbAPI.updateDocument('products', id, data);
+                showToast("Produk diupdate", "success");
+            } else {
+                await dbAPI.addDocToCollection('products', data);
+                showToast("Produk ditambahkan", "success");
+            }
+            closeModal();
+            renderAdminProducts();
+        };
+
+        window.confirmDeleteProduct = (id) => {
+            const html = `<p>Anda yakin ingin menghapus produk ini permanen?</p>`;
+            const act = `
+                <button onclick="closeModal()" class="px-4 py-2 bg-gray-200 rounded">Batal</button>
+                <button onclick="executeDeleteProduct('${id}')" class="px-4 py-2 bg-red-600 text-white rounded">Hapus</button>
+            `;
+            showModal("Konfirmasi Hapus", html, act);
+        };
+
+        window.executeDeleteProduct = async (id) => {
+            await dbAPI.deleteDocument('products', id);
+            closeModal();
+            showToast("Produk dihapus", "success");
+            renderAdminProducts();
+        };
+
+        window.renderAdminOrders = async () => {
+            const orders = await dbAPI.getCollection('orders');
+            // Sort by latest
+            orders.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+            const tbody = document.getElementById('admin-orders-table');
+            
+            if(orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-500">Belum ada pesanan masuk.</td></tr>';
+                return;
+            }
+
+            const statuses = ['Menunggu Pembayaran', 'Diproses', 'Dikirim', 'Selesai', 'Dibatalkan'];
+            
+            tbody.innerHTML = orders.map(o => {
+                const date = new Date(o.createdAt).toLocaleDateString('id-ID', { day:'2-digit', month:'short' });
+                
+                let optHtml = statuses.map(s => `<option value="${s}" ${o.status === s ? 'selected' : ''}>${s}</option>`).join('');
+
+                return `
+                    <tr class="hover:bg-gray-50 transition border-b border-gray-50 last:border-0">
+                        <td class="p-3">
+                            <span class="font-bold text-gray-800 block">${o.orderId}</span>
+                            <span class="text-xs text-gray-500">${date}</span>
+                        </td>
+                        <td class="p-3 text-sm">
+                            <p class="font-medium">${o.customerData.name}</p>
+                            <p class="text-xs text-gray-500">${o.customerData.whatsapp}</p>
+                        </td>
+                        <td class="p-3 font-bold text-gray-800">${formatRp(o.totalAmount)}</td>
+                        <td class="p-3">
+                            <select onchange="updateOrderStatus('${o.id}', this.value)" class="text-xs font-semibold p-1.5 rounded border border-gray-300 outline-none bg-white focus:border-blue-500">
+                                ${optHtml}
+                            </select>
+                        </td>
+                        <td class="p-3 text-center">
+                            <div class="flex justify-center gap-2">
+                                <button onclick="viewOrderDetails('${o.id}')" class="text-blue-600 bg-blue-50 px-2 py-1 rounded text-xs font-bold hover:bg-blue-100" title="Detail"><i class="fas fa-eye"></i></button>
+                                <button onclick="printInvoice('${o.id}')" class="text-gray-600 bg-gray-200 px-2 py-1 rounded text-xs font-bold hover:bg-gray-300" title="Cetak Invoice"><i class="fas fa-print"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        window.updateOrderStatus = async (id, newStatus) => {
+            await dbAPI.updateDocument('orders', id, { status: newStatus });
+            showToast("Status pesanan diperbarui", "success");
+        };
+
+        window.renderAdminReports = async () => {
+            const orders = await dbAPI.getCollection('orders');
+            
+            let omset = 0;
+            let completed = 0;
+            let canceled = 0;
+            let productCount = {}; // { id: {name, count} }
+
+            orders.forEach(o => {
+                if(o.status === 'Selesai') {
+                    omset += o.totalAmount;
+                    completed++;
+                    o.items.forEach(i => {
+                        if(!productCount[i.id]) productCount[i.id] = { name: i.name, qty: 0 };
+                        productCount[i.id].qty += i.qty;
+                    });
+                }
+                if(o.status === 'Dibatalkan') canceled++;
             });
 
-            // Initialize DB logic based on environment
-            if(IS_PREVIEW) {
-                // App Preview environment rules: Must auth before doing any firestore operation
-                if(typeof __initial_auth_token !== 'undefined') {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                setupRealtimeListeners();
-                await autoSetupDatabase();
-                q('#loader').classList.add('hidden');
-            } else {
-                // Production logic
-                try {
-                    await signInAnonymously(auth);
-                    setupRealtimeListeners();
-                    await autoSetupDatabase();
-                } catch(e) { console.error("Firebase Init Error:", e); }
-                q('#loader').classList.add('hidden');
+            document.getElementById('report-total-omset').innerText = formatRp(omset);
+            document.getElementById('report-completed-orders').innerText = completed;
+            document.getElementById('report-canceled-orders').innerText = canceled;
+
+            // Top Products
+            let arr = Object.values(productCount).sort((a,b) => b.qty - a.qty).slice(0, 5);
+            const topEl = document.getElementById('report-top-products');
+            if(arr.length > 0) {
+                topEl.innerHTML = arr.map((item, idx) => `
+                    <li class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                        <div class="flex items-center gap-3">
+                            <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">${idx+1}</span>
+                            <span class="text-sm font-medium text-gray-800">${item.name}</span>
+                        </div>
+                        <span class="text-sm font-bold text-gray-600">${item.qty} terjual</span>
+                    </li>
+                `).join('');
             }
+        };
+
+        window.printInvoice = async (id) => {
+            const o = await dbAPI.getDocById('orders', id);
+            if(!o) return;
+
+            document.getElementById('print-order-id').innerText = o.orderId;
+            document.getElementById('print-date').innerText = `Tanggal: ${new Date(o.createdAt).toLocaleDateString('id-ID')}`;
+            document.getElementById('print-cust-name').innerText = o.customerData.name;
+            document.getElementById('print-cust-wa').innerText = `WA: ${o.customerData.whatsapp}`;
+            document.getElementById('print-cust-address').innerText = o.customerData.address;
+            document.getElementById('print-payment-method').innerText = o.paymentMethod;
+            document.getElementById('print-status').innerText = o.status;
+
+            document.getElementById('print-items').innerHTML = o.items.map(i => `
+                <tr>
+                    <td class="p-2 border border-gray-300">${i.name}</td>
+                    <td class="p-2 border border-gray-300 text-center">${i.qty}</td>
+                    <td class="p-2 border border-gray-300 text-right">${formatRp(i.price)}</td>
+                    <td class="p-2 border border-gray-300 text-right">${formatRp(i.qty * i.price)}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('print-total').innerText = formatRp(o.totalAmount);
+
+            window.print();
+        };
+
+        window.onload = () => {
+            initApp();
         };
 
     </script>
